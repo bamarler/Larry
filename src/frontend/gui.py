@@ -27,6 +27,12 @@ class ChatWindow:
         self.root = tk.Tk()
         self.root.title("Chat with Larry")
 
+        # Initialization for system folder and functions.txt
+        self.system_folder = "system"
+        self.system_file = os.path.join(self.system_folder, "functions.txt")
+        self.messages = []  # Initialize messages list
+        self.initialize_system_file()
+
         # Disable window bar and prevent resizing/moving
         self.root.overrideredirect(True)
         self.root.attributes('-topmost', True)  # Keep the window always on top
@@ -102,9 +108,6 @@ class ChatWindow:
         self.chunk_buffer = ""
         self.current_response_html = ""
 
-        # Initialize message history
-        self.messages = []
-
         # Auto-resize the text box
         self.entry_field.bind("<KeyRelease>", self.resize_textbox)
 
@@ -115,7 +118,6 @@ class ChatWindow:
         # Ensure chat folder exists
         self.chat_folder = "chats"
         self.current_chat_file = None
-        self.messages = []
         self.full_response_html = ""
 
         self.new_chat()
@@ -125,6 +127,19 @@ class ChatWindow:
 
         # Periodically check the queue for updates
         self.root.after(100, self.process_queue)
+
+    def initialize_system_file(self):
+        """Initialize the system folder and functions.txt if they don't exist, and read system file content."""
+        if not os.path.exists(self.system_folder):
+            os.makedirs(self.system_folder)
+        if not os.path.exists(self.system_file):
+            with open(self.system_file, "w", encoding="utf-8") as file:
+                file.write("You are Larry, a helpful AI assistant\n")
+        
+        # Read system file content and add to messages
+        with open(self.system_file, "r", encoding="utf-8") as file:
+            system_content = file.read().strip()
+            self.messages = [{"role": "system", "content": system_content}]
 
     def update_model_list(self):
         """Update the model list in the dropdown menu."""
@@ -153,13 +168,13 @@ class ChatWindow:
             with open(self.current_chat_file, "a", encoding="utf-8") as file:
                 file.write(f"user: {user_input}\nassistant: ")
 
+            # Append the user message to self.messages
+            self.messages.append({'role': 'user', 'content': user_input})
+
             # Call update_chat_display to refresh the display
             self.update_chat_display()
 
             selected_model = self.model_var.get()  # Get the selected model
-
-            # Add the user message to the chat history
-            self.messages.append({'role': 'user', 'content': user_input})
 
             # Disable the send button and entry field during processing
             self.send_button.config(state=tk.DISABLED)
@@ -196,9 +211,10 @@ class ChatWindow:
             self.chunk_batch = []
             self.root.after(100, self.process_chunks)  # Small delay to avoid flickering
         except StopIteration:
-            # Append the final response to the full response HTML and add a newline
+            # Append the final response to self.messages
             with open(self.current_chat_file, "a", encoding="utf-8") as file:
                 file.write("\n\n")
+            self.messages.append({'role': 'assistant', 'content': self.chunk_buffer.strip()})
 
             # Re-enable the send button and entry field after processing
             self.send_button.config(state=tk.NORMAL)
@@ -361,8 +377,11 @@ class ChatWindow:
         with open(self.current_chat_file, "r", encoding="utf-8") as file:
             content = file.read()
 
-        parts = content.split("\nassistant: ")
         self.messages = []
+        self.initialize_system_file()
+
+        # Split the content by "assistant: " to differentiate between user and assistant messages
+        parts = content.split("\nassistant: ")
 
         for part in parts:
             if "user: " in part:
@@ -375,6 +394,8 @@ class ChatWindow:
         if not content.endswith("\n"):
             self.messages.append({'role': 'assistant', 'content': parts[-1].strip()})
 
+        self.update_chat_display()
+
     def change_chat(self, event=None):
         selected_chat = self.selected_chat.get()
         if selected_chat:
@@ -384,6 +405,7 @@ class ChatWindow:
 
     def new_chat(self):
         self.messages = []
+        self.initialize_system_file()
         self.full_response_html = ""
         self.current_chat_file = None
         self.html_label.set_html("")
