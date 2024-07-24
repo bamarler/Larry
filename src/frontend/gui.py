@@ -58,7 +58,7 @@ class ChatWindow:
         self.top_frame.pack(fill=tk.X)
 
         # Create a refresh button with text inside the top frame
-        self.refresh_button = tk.Button(self.top_frame, text="⟳", command=self.update_chat_list, font=(font, fontsize), bg=darker_gray, fg=off_white, bd=0)
+        self.refresh_button = tk.Button(self.top_frame, text="⟳", command=self.refresh, font=(font, fontsize), bg=darker_gray, fg=off_white, bd=0)
         self.refresh_button.pack(side=tk.LEFT, padx=5, pady=5)
 
         # Add a dropdown menu for chat selection
@@ -113,8 +113,6 @@ class ChatWindow:
 
         self.init_settings_page()
 
-        self.update_model_list()
-
         # Ensure chat folder exists
         self.chat_folder = "chats"
         self.current_chat_file = None
@@ -127,6 +125,9 @@ class ChatWindow:
 
         # Periodically check the queue for updates
         self.root.after(100, self.process_queue)
+        
+        # Update the model list
+        self.update_model_list()
 
     def initialize_system_file(self):
         """Initialize the system folder and functions.txt if they don't exist, and read system file content."""
@@ -140,14 +141,6 @@ class ChatWindow:
         with open(self.system_file, "r", encoding="utf-8") as file:
             system_content = file.read().strip()
             self.messages = [{"role": "system", "content": system_content}]
-
-    def update_model_list(self):
-        """Update the model list in the dropdown menu."""
-        models = larry.list()  # Acquire the list of available models
-        model_names = [model['name'] for model in models['models']]  # Extract model names from the dictionary
-        self.chat_dropdown['values'] = model_names
-        if model_names:
-            self.selected_chat.set(model_names[0])  # Set the first model as default
 
     def send_message_event(self, event=None):
         """Handle the event when Enter is pressed to send the message."""
@@ -335,10 +328,22 @@ class ChatWindow:
         self.quit_button.pack(side=tk.BOTTOM, pady=20)
 
         # Add dropdown menu of models
-        self.models = larry.list()['models']
         self.model_var = tk.StringVar()
-        self.model_menu = ttk.OptionMenu(self.settings_frame, self.model_var, *([model['name'] for model in self.models]))
-        self.model_menu.pack()
+        self.model_dropdown = ttk.Combobox(self.settings_frame, textvariable=self.model_var, state='readonly', font=(font, fontsize))
+        self.model_dropdown.pack(pady=10)
+
+        self.update_model_list()
+
+    def update_model_list(self):
+        """Update the model list in the dropdown menu without resetting the selected model."""
+        models = larry.list()  # Acquire the list of available models
+        model_names = [model['name'] for model in models['models']]  # Extract model names from the dictionary
+        current_selection = self.model_var.get()  # Save the current selection
+        self.model_dropdown['values'] = model_names
+        if current_selection in model_names:
+            self.model_var.set(current_selection)  # Restore the current selection
+        elif model_names:
+            self.model_var.set(model_names[0])  # Set the first model as default if current selection is invalid
 
     def show_settings_page(self):
         self.chat_frame.pack_forget()
@@ -358,7 +363,6 @@ class ChatWindow:
             return
         chat_names = [os.path.basename(chat_file).replace(".txt", "") for chat_file in chat_files]
         self.chat_dropdown['values'] = chat_names
-        self.update_chat_display()  # Ensure the chat display is updated
 
     def save_chat_history(self):
         if not self.current_chat_file:
@@ -416,6 +420,13 @@ class ChatWindow:
     def save_chat_history_and_open(self):
         self.save_chat_history()
         self.change_chat()
+
+    def refresh(self):
+        self.update_chat_list()
+        self.update_model_list()
+        self.load_chat_history()
+        self.update_chat_display()
+
 
 # Create and run the chat window
 chat_window = ChatWindow()
