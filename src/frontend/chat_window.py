@@ -7,12 +7,9 @@ from markdown.extensions.tables import TableExtension
 from markdown.extensions.fenced_code import FencedCodeExtension
 from queue import Queue
 import threading
-import time
 import os
 import glob
-from tkinter import filedialog
-import pyperclip
-import re
+import subprocess
 
 # Colors and font settings
 charcoal = '#2C2F33'
@@ -32,6 +29,13 @@ class ChatWindow:
         self.system_file = os.path.join(self.system_folder, "functions.txt")
         self.messages = []  # Initialize messages list
         self.initialize_system_file()
+
+        # Ensure chat folder exists
+        self.chat_folder = "chats"
+        if not os.path.exists(self.chat_folder):
+            os.makedirs(self.chat_folder)
+        self.current_chat_file = None
+        self.full_response_html = ""
 
         # Disable window bar and prevent resizing/moving
         self.root.overrideredirect(True)
@@ -112,11 +116,6 @@ class ChatWindow:
         self.entry_field.bind("<KeyRelease>", self.resize_textbox)
 
         self.init_settings_page()
-
-        # Ensure chat folder exists
-        self.chat_folder = "chats"
-        self.current_chat_file = None
-        self.full_response_html = ""
 
         self.new_chat()
 
@@ -328,11 +327,19 @@ class ChatWindow:
         self.quit_button.pack(side=tk.BOTTOM, pady=20)
 
         # Add dropdown menu of models
+        self.models = larry.list()['models']
         self.model_var = tk.StringVar()
         self.model_dropdown = ttk.Combobox(self.settings_frame, textvariable=self.model_var, state='readonly', font=(font, fontsize))
-        self.model_dropdown.pack(pady=10)
+        self.model_dropdown.pack()
 
-        self.update_model_list()
+        # Text entry for model name
+        self.model_name_var = tk.StringVar()
+        self.model_name_entry = tk.Entry(self.settings_frame, textvariable=self.model_name_var, font=(font, fontsize), bg=charcoal, fg=off_white, insertbackground=off_white)
+        self.model_name_entry.pack(side=tk.LEFT, padx=10, pady=10)
+
+        # Button to install model
+        self.install_button = tk.Button(self.settings_frame, text="Install", command=self.install_model, bg=darker_gray, fg=off_white, bd=0, font=(font, fontsize))
+        self.install_button.pack(side=tk.LEFT, padx=5, pady=10)
 
     def update_model_list(self):
         """Update the model list in the dropdown menu without resetting the selected model."""
@@ -427,9 +434,18 @@ class ChatWindow:
         self.load_chat_history()
         self.update_chat_display()
 
+    def install_model(self):
+        model_name = self.model_name_var.get().strip()
+        if model_name:
+            try:
+                larry.pull(model_name)
+                print(f"Model {model_name} installed successfully.")
+                self.update_model_list()
+            except Exception as e:
+                print(f"Failed to install model {model_name}: {e}")
 
 # Create and run the chat window
-chat_window = ChatWindow()
-chat_window.show_chat_page()
-chat_window.root.mainloop()
+# chat_window = ChatWindow()
+# chat_window.show_chat_page()
+# chat_window.root.mainloop()
 

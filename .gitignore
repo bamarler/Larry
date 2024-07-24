@@ -26,9 +26,11 @@ share/python-wheels/
 *.egg
 MANIFEST
 
-# reference folders
+# ollama
+ollama-models
 chats
 system
+ollama-installer.exe
 
 # PyInstaller
 #  Usually these files are written by a python script from a template

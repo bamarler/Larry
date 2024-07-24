@@ -1,5 +1,7 @@
 import ollama
 
+ollama.serve()
+
 response = ollama.chat(
     model="llama3",
     messages=[
