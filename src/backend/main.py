@@ -49,6 +49,17 @@ def check_and_install_ollama():
         except subprocess.CalledProcessError as e:
             print(f"Failed to install Ollama: {e}")
 
+def set_ollama_models_directory():
+    # Ensure Model Folder Exists
+    model_folder = "ollama_models"
+    if not os.path.exists(model_folder):
+        os.makedirs(model_folder)
+    
+    # Set OLLAMA_MODELS environment variable to the app directory
+    app_directory = os.path.realpath(model_folder)
+    os.environ["OLLAMA_MODELS"] = app_directory
+    print(f"OLLAMA_MODELS set to {app_directory}")
+
 def start_ollama_server():
     global ollama_process
     try:
@@ -67,6 +78,7 @@ def stop_ollama_server():
         ollama_process.wait()
         print("Ollama server stopped.")
     
+def stop_ollama_app():
     # Kill any other running ollama processes using taskkill
     try:
         subprocess.run(["taskkill", "/f", "/im", "Ollama.exe"], check=True)
@@ -75,8 +87,9 @@ def stop_ollama_server():
         print(f"Failed to terminate Ollama process: {e}")
 
 def main():
+    set_ollama_models_directory()
     check_and_install_ollama()
-    stop_ollama_server()
+    stop_ollama_app()
     start_ollama_server()
     atexit.register(stop_ollama_server)
     chat_window = ChatWindow()

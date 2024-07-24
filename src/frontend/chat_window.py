@@ -438,7 +438,8 @@ class ChatWindow:
         model_name = self.model_name_var.get().strip()
         if model_name:
             try:
-                larry.pull(model_name)
+                # larry.pull(model_name)
+                subprocess.run(["ollama", "pull", model_name], check=True)
                 print(f"Model {model_name} installed successfully.")
                 self.update_model_list()
             except Exception as e:
