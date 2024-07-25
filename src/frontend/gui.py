@@ -7,6 +7,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.realp
 
 from src.backend.constants import *
 from src.frontend.widgets.settings import Settings
+from src.frontend.widgets.chat_window import ChatWindow
 
 class GUI:
     def __init__(self):
@@ -54,6 +55,10 @@ class GUI:
         self.frame_container = tk.Frame(self.root, bg=ACCENT_COLOR)
         self.frame_container.pack(fill=tk.BOTH, expand=True)
 
+        # Create the chat window widget
+        self.chat_window = ChatWindow(self.frame_container)
+        self.chat_window.pack(fill=tk.BOTH, expand=True)
+
         # Create the settings widget
         self.settings = Settings(self.frame_container)
         self.settings_open = False
@@ -90,10 +95,6 @@ class GUI:
         def on_mouse_move(event):
             x = event.x
             y = event.y
-            new_chat_button_x1 = self.new_chat_button.winfo_rootx() - self.root.winfo_rootx()
-            new_chat_button_x2 = new_chat_button_x1 + self.new_chat_button.winfo_width()
-            new_chat_button_y1 = self.new_chat_button.winfo_rooty() - self.root.winfo_rooty()
-            new_chat_button_y2 = new_chat_button_y1 + self.new_chat_button.winfo_height()
             
             if (self.side == "right" and x < border_width) or (self.side == "left" and x > self.root.winfo_width() - border_width):
                 self.root.config(cursor="sb_h_double_arrow")
@@ -111,7 +112,9 @@ class GUI:
             self.settings.pack_forget()
             self.settings_open = False
             self.settings_button.config(text="⚙")
+            self.chat_window.pack(fill=tk.BOTH, expand=True)
         else:
+            self.chat_window.pack_forget()
             self.settings.pack(fill=tk.BOTH, expand=True)
             self.settings_open = True
             self.settings_button.config(text="<<")
