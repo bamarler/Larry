@@ -6,7 +6,7 @@ import atexit
 import urllib.request
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))))
-from src.frontend.chat_window import ChatWindow
+from src.frontend.gui import GUI
 
 ollama_process = None
 
@@ -92,9 +92,9 @@ def main():
     stop_ollama_app()
     start_ollama_server()
     atexit.register(stop_ollama_server)
-    chat_window = ChatWindow()
-    chat_window.show_chat_page()
-    chat_window.root.mainloop()
+    gui = GUI()
+    #gui.show_chat_page()
+    gui.root.mainloop()
 
 if __name__ == "__main__":
     main()

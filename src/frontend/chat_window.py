@@ -8,8 +8,11 @@ from markdown.extensions.fenced_code import FencedCodeExtension
 from queue import Queue
 import threading
 import os
-import glob
-import subprocess
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))))
+
+import re
 
 # Colors and font settings
 charcoal = '#2C2F33'
@@ -19,78 +22,19 @@ darker_gray = '#1E1E1E'  # Darker gray color
 fontsize = 10
 font = 'helvetica'
 
-class ChatWindow:
-    def __init__(self):
-        self.root = tk.Tk()
-        self.root.title("Chat with Larry")
-
-        # Initialization for system folder and functions.txt
-        self.system_folder = "system"
-        self.system_file = os.path.join(self.system_folder, "functions.txt")
-        self.messages = []  # Initialize messages list
-        self.initialize_system_file()
-
-        # Ensure chat folder exists
-        self.chat_folder = "chats"
-        if not os.path.exists(self.chat_folder):
-            os.makedirs(self.chat_folder)
-        self.current_chat_file = None
-        self.full_response_html = ""
-
-        # Disable window bar and prevent resizing/moving
-        self.root.overrideredirect(True)
-        self.root.attributes('-topmost', True)  # Keep the window always on top
-
-        # Get screen width and height
-        screen_width = self.root.winfo_screenwidth()
-        screen_height = self.root.winfo_screenheight()
-
-        # Assume a typical taskbar height (50 pixels)
-        taskbar_height = 50
-
-        # Set window dimensions and position
-        window_width = screen_width // 4
-        window_height = screen_height - taskbar_height
-        x_position = screen_width - window_width
-        y_position = 0
-
-        # Set geometry of the window
-        self.root.geometry(f"{window_width}x{window_height}+{x_position}+{y_position}")
-
-        # Create a frame for the top buttons
-        self.top_frame = tk.Frame(self.root, bg=darker_gray)
-        self.top_frame.pack(fill=tk.X)
-
-        # Create a refresh button with text inside the top frame
-        self.refresh_button = tk.Button(self.top_frame, text="⟳", command=self.refresh, font=(font, fontsize), bg=darker_gray, fg=off_white, bd=0)
-        self.refresh_button.pack(side=tk.LEFT, padx=5, pady=5)
-
-        # Add a dropdown menu for chat selection
-        self.selected_chat = tk.StringVar()
-        self.chat_dropdown = ttk.Combobox(self.top_frame, textvariable=self.selected_chat, state='readonly', font=(font, fontsize))
-        self.chat_dropdown.pack(side=tk.LEFT, padx=10)
-        self.chat_dropdown.bind("<<ComboboxSelected>>", self.change_chat)
-
-        # Create a settings button with text inside the top frame
-        self.settings_button = tk.Button(self.top_frame, text="⚙", command=self.show_settings_page, font=(font, fontsize), bg=darker_gray, fg=off_white, bd=0)
-        self.settings_button.pack(side=tk.RIGHT, padx=5, pady=5)
-
-        # Add a new chat button
-        self.new_chat_button = tk.Button(self.top_frame, text="+", command=self.new_chat, font=(font, fontsize), bg=darker_gray, fg=off_white, bd=0)
-        self.new_chat_button.pack(side=tk.RIGHT, padx=5, pady=5)
-
-        # Initialize chat frame
-        self.chat_frame = tk.Frame(self.root, bg=charcoal)
-        self.chat_frame.pack(fill=tk.BOTH, expand=True)
+class ChatWindow(tk.Frame):
+    def __init__(self, parent):
+        super().__init__(parent, bg=charcoal)
+        self.root = parent  # Reference to the root window
 
         # Create the HTML label for displaying the chat
-        self.html_label = HTMLLabel(self.chat_frame, html="", width=80, height=40, background=charcoal, font=(font, fontsize))
+        self.html_label = HTMLLabel(self, html="", width=80, height=40, background=charcoal, font=(font, fontsize))
         self.html_label.pack(expand=True, fill=tk.BOTH, padx=10, pady=5)
         self.html_label.fit_height()
         self.html_label.yview_moveto(0)  # Ensure it starts at the top
 
         # Create a frame for the entry field and send button inside the chat frame
-        self.entry_frame = tk.Frame(self.chat_frame, bg=charcoal)
+        self.entry_frame = tk.Frame(self, bg=charcoal)
         self.entry_frame.pack(side=tk.BOTTOM, fill=tk.X, padx=10, pady=5)
 
         # Create the entry field for user input
@@ -105,41 +49,16 @@ class ChatWindow:
         self.send_button = tk.Button(self.entry_frame, text="Send", command=self.send_message, font=(font, fontsize), bg=charcoal, fg=off_white)
         self.send_button.pack(side=tk.RIGHT, padx=5, pady=5)
 
-        # Set the initial theme to dark
-        self.root.config(bg=charcoal)
-
         self.full_response_html = ""
         self.chunk_buffer = ""
         self.current_response_html = ""
 
-        # Auto-resize the text box
-        self.entry_field.bind("<KeyRelease>", self.resize_textbox)
-
-        self.init_settings_page()
-
-        self.new_chat()
-
-        # Queue for communication between threads
         self.queue = Queue()
+        self.current_chat_file = None
+        self.chat_folder = "chats"
+        self.messages = []
 
-        # Periodically check the queue for updates
         self.root.after(100, self.process_queue)
-        
-        # Update the model list
-        self.update_model_list()
-
-    def initialize_system_file(self):
-        """Initialize the system folder and functions.txt if they don't exist, and read system file content."""
-        if not os.path.exists(self.system_folder):
-            os.makedirs(self.system_folder)
-        if not os.path.exists(self.system_file):
-            with open(self.system_file, "w", encoding="utf-8") as file:
-                file.write("You are Larry, a helpful AI assistant\n")
-        
-        # Read system file content and add to messages
-        with open(self.system_file, "r", encoding="utf-8") as file:
-            system_content = file.read().strip()
-            self.messages = [{"role": "system", "content": system_content}]
 
     def send_message_event(self, event=None):
         """Handle the event when Enter is pressed to send the message."""
@@ -312,141 +231,12 @@ class ChatWindow:
         line_count = self.entry_field.index('end-1c').split('.')[0]
         self.entry_field.config(height=int(line_count))
 
-    def close_window(self):
-        self.root.destroy()
-    
-    def init_settings_page(self):
-        self.settings_frame = tk.Frame(self.root, bg=charcoal)
-        
-        # Back button
-        self.back_button = tk.Button(self.settings_frame, text="Back", command=self.show_chat_page, bg=darker_gray, fg=off_white, bd=0, font=(font, fontsize))
-        self.back_button.pack(side=tk.TOP, anchor='nw', padx=10, pady=10)
-        
-        # Quit button
-        self.quit_button = tk.Button(self.settings_frame, text="Quit", command=self.close_window, bg=darker_gray, fg=off_white, bd=0, font=(font, fontsize))
-        self.quit_button.pack(side=tk.BOTTOM, pady=20)
+    def set_current_chat_file(self, chat_file):
+        self.current_chat_file = chat_file
 
-        # Add dropdown menu of models
-        self.models = larry.list()['models']
-        self.model_var = tk.StringVar()
-        self.model_dropdown = ttk.Combobox(self.settings_frame, textvariable=self.model_var, state='readonly', font=(font, fontsize))
-        self.model_dropdown.pack()
+    def set_messages(self, messages):
+        self.messages = messages
 
-        # Text entry for model name
-        self.model_name_var = tk.StringVar()
-        self.model_name_entry = tk.Entry(self.settings_frame, textvariable=self.model_name_var, font=(font, fontsize), bg=charcoal, fg=off_white, insertbackground=off_white)
-        self.model_name_entry.pack(side=tk.LEFT, padx=10, pady=10)
-
-        # Button to install model
-        self.install_button = tk.Button(self.settings_frame, text="Install", command=self.install_model, bg=darker_gray, fg=off_white, bd=0, font=(font, fontsize))
-        self.install_button.pack(side=tk.LEFT, padx=5, pady=10)
-
-    def update_model_list(self):
-        """Update the model list in the dropdown menu without resetting the selected model."""
-        models = larry.list()  # Acquire the list of available models
-        model_names = [model['name'] for model in models['models']]  # Extract model names from the dictionary
-        current_selection = self.model_var.get()  # Save the current selection
-        self.model_dropdown['values'] = model_names
-        if current_selection in model_names:
-            self.model_var.set(current_selection)  # Restore the current selection
-        elif model_names:
-            self.model_var.set(model_names[0])  # Set the first model as default if current selection is invalid
-
-    def show_settings_page(self):
-        self.chat_frame.pack_forget()
-        self.entry_frame.pack_forget()
-        self.settings_frame.pack(fill=tk.BOTH, expand=True)
-
-    def show_chat_page(self):
-        self.settings_frame.pack_forget()
-        self.chat_frame.pack(fill=tk.BOTH, expand=True)
-        self.entry_frame.pack(fill=tk.X, padx=10, pady=5)
-        self.html_label.yview_moveto(0)  # Ensure it starts at the top
-
-    def update_chat_list(self):
-        chat_files = glob.glob(os.path.join(self.chat_folder, "*.txt"))
-        if not chat_files:
-            self.new_chat()
-            return
-        chat_names = [os.path.basename(chat_file).replace(".txt", "") for chat_file in chat_files]
-        self.chat_dropdown['values'] = chat_names
-
-    def save_chat_history(self):
-        if not self.current_chat_file:
-            base_name = "Untitled Chat"
-            count = len(glob.glob(os.path.join(self.chat_folder, f"{base_name}*.txt"))) + 1
-            self.current_chat_file = os.path.join(self.chat_folder, f"{base_name} {count}.txt")
-
-        with open(self.current_chat_file, "w", encoding="utf-8") as file:
-            for message in self.messages:
-                file.write(f"{message['role']}: {message['content']}\n")
-
-    def load_chat_history(self):
-        if not self.current_chat_file:
-            return
-
-        with open(self.current_chat_file, "r", encoding="utf-8") as file:
-            content = file.read()
-
-        self.messages = []
-        self.initialize_system_file()
-
-        # Split the content by "assistant: " to differentiate between user and assistant messages
-        parts = content.split("\nassistant: ")
-
-        for part in parts:
-            if "user: " in part:
-                user_part, assistant_part = part.split("user: ", 1)
-                if user_part.strip():
-                    self.messages.append({'role': 'assistant', 'content': user_part.strip()})
-                self.messages.append({'role': 'user', 'content': assistant_part.strip()})
-
-        # Handle the case where the final assistant response is not loaded
-        if not content.endswith("\n"):
-            self.messages.append({'role': 'assistant', 'content': parts[-1].strip()})
-
-        self.update_chat_display()
-
-    def change_chat(self, event=None):
-        selected_chat = self.selected_chat.get()
-        if selected_chat:
-            self.current_chat_file = os.path.join(self.chat_folder, f"{selected_chat}.txt")
-            self.load_chat_history()
-            self.update_chat_display()  # Ensure the chat display is updated and auto-scrolls to the bottom
-
-    def new_chat(self):
-        self.messages = []
-        self.initialize_system_file()
-        self.full_response_html = ""
-        self.current_chat_file = None
-        self.html_label.set_html("")
-        self.selected_chat.set(f"Untitled Chat {len(glob.glob(os.path.join(self.chat_folder, 'Untitled Chat*.txt'))) + 1}")
-        self.save_chat_history()
-        self.update_chat_list()
-
-    def save_chat_history_and_open(self):
-        self.save_chat_history()
-        self.change_chat()
-
-    def refresh(self):
-        self.update_chat_list()
-        self.update_model_list()
-        self.load_chat_history()
-        self.update_chat_display()
-
-    def install_model(self):
-        model_name = self.model_name_var.get().strip()
-        if model_name:
-            try:
-                # larry.pull(model_name)
-                subprocess.run(["ollama", "pull", model_name], check=True)
-                print(f"Model {model_name} installed successfully.")
-                self.update_model_list()
-            except Exception as e:
-                print(f"Failed to install model {model_name}: {e}")
-
-# Create and run the chat window
-# chat_window = ChatWindow()
-# chat_window.show_chat_page()
-# chat_window.root.mainloop()
-
+    def initialize_queue(self):
+        self.queue = Queue()
+        self.after(100, self.process_queue)
