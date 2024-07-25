@@ -4,6 +4,7 @@ import sys
 import time
 import atexit
 import urllib.request
+import psutil
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))))
 from src.frontend.gui import GUI
@@ -79,12 +80,16 @@ def stop_ollama_server():
         print("Ollama server stopped.")
     
 def stop_ollama_app():
-    # Kill any other running ollama processes using taskkill
-    try:
-        subprocess.run(["taskkill", "/f", "/im", "Ollama.exe"], check=True)
-        print("Terminated any running Ollama processes.")
-    except subprocess.CalledProcessError as e:
-        print(f"Failed to terminate Ollama process: {e}")
+    for proc in psutil.process_iter(['pid', 'name']):
+        try:
+            # Check if the process name contains "ollama" (case insensitive)
+            if 'ollama' in proc.info['name'].lower():
+                print(f"Terminating process {proc.info['name']} with PID {proc.info['pid']}")
+                proc.terminate()  # Graceful termination
+                proc.wait(timeout=3)  # Wait for the process to terminate
+                print(f"Process {proc.info['pid']} terminated successfully.")
+        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess) as e:
+            print(f"Could not terminate process {proc.info['pid']}: {e}")
 
 def main():
     set_ollama_models_directory()

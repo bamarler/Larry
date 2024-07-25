@@ -62,7 +62,7 @@ class ChatWindow:
         self.top_frame.pack(fill=tk.X)
 
         # Create a refresh button with text inside the top frame
-        self.refresh_button = tk.Button(self.top_frame, text="⟳", command=self.refresh, font=(font, fontsize), bg=darker_gray, fg=off_white, bd=0)
+        self.refresh_button = tk.Button(self.top_frame, text="↻", command=self.refresh, font=(font, fontsize), bg=darker_gray, fg=off_white, bd=0)
         self.refresh_button.pack(side=tk.LEFT, padx=5, pady=5)
 
         # Add a dropdown menu for chat selection
