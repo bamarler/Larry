@@ -4,7 +4,11 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))))
 
-from src.backend.constants import *
+from src.frontend.ui_constants import *
+from src.frontend.widgets.settings_widgets.model_settings import ModelSettingsPage
+from src.frontend.widgets.settings_widgets.download_settings_page import DownloadSettingsPage
+from src.frontend.widgets.settings_widgets.system_text_settings import SystemTextSettingsPage
+from src.frontend.widgets.settings_widgets.theme_settings import ThemeSettingsPage
 
 class Settings(tk.Frame):
     def __init__(self, parent):
@@ -19,56 +23,43 @@ class Settings(tk.Frame):
         self.main_frame = tk.Frame(self, bg=ACCENT_COLOR)
         self.main_frame.pack(fill=tk.BOTH, expand=True, side=tk.RIGHT)
 
+        self.settings_label = tk.Label(self.sidebar_frame, text="Settings", bg=HEADER_COLOR, fg=TEXT_COLOR, font=(FONT, FONTSIZE))
+        self.settings_label.pack(fill=tk.BOTH, padx=10, pady=5)
+
+        # Initialize Pages
+        self.model_settings = ModelSettingsPage(self)
+        self.download_settings = DownloadSettingsPage(self)
+        self.system_text_settings = SystemTextSettingsPage(self)
+        self.theme_settings = ThemeSettingsPage(self)
+
         # Initialize list to keep track of buttons and pages
-        self.buttons = []
         self.pages = []
         self.current_page = None
         self.current_button = None
 
-        self.init_buttons()  # Initialize the buttons and pages
-        self.show_page(0)
+        self.init_pages()  # Initialize the buttons
+        self.show_page(self.pages[0].name)
 
-    def init_buttons(self):
-        self.init_testPage1()
-        self.init_testPage2()
+    def init_pages(self):
+        self.pages.append(self.model_settings)
+        self.pages.append(self.download_settings)
+        self.pages.append(self.system_text_settings)
+        self.pages.append(self.theme_settings)
 
-        for button in self.buttons:
-            button.pack(fill=tk.BOTH, padx=10, pady=5)
-    
-    def init_testPage1(self):
-        testButton1 = SettingsButton(self.sidebar_frame, text="test button 1", command=lambda: self.show_page(0))
-        self.buttons.append(testButton1)
+        for page in self.pages:
+            page.button.pack(fill=tk.BOTH, padx=10, pady=5)
 
-        testPage1 = SettingsPage(self.main_frame)
-        testPage1.config(bg=BACKGROUND_COLOR)
-        self.pages.append(testPage1)
-    
-    def init_testPage2(self):
-        testButton2 = SettingsButton(self.sidebar_frame, text="test button 2", command=lambda: self.show_page(1))
-        self.buttons.append(testButton2)
-
-        testPage2 = SettingsPage(self.main_frame)
-        testPage2.config(bg=BACKGROUND_COLOR)
-        self.pages.append(testPage2)
-
-    def show_page(self, index):
+    def show_page(self, name):
         if self.current_page:
             self.current_page.pack_forget()
-        self.current_page = self.pages[index]
-        self.current_page.pack(fill=tk.BOTH, expand=True)
-
-        # Highlight the current button
         if self.current_button:
             self.current_button.config(bg=HEADER_COLOR)
-        self.current_button = self.buttons[index]
-        self.current_button.config(bg=BACKGROUND_COLOR)
 
-class SettingsButton(tk.Button):
-    def __init__(self, parent, text, command):
-        super().__init__(parent, text=text, command=command, bg=HEADER_COLOR, fg=TEXT_COLOR, bd=0, font=(FONT, FONTSIZE))
-        self.pack_propagate(False)
-
-class SettingsPage(tk.Frame):
-    def __init__(self, parent):
-        super().__init__(parent, bg=BACKGROUND_COLOR)
-        self.pack_propagate(False)
+        for setting_page in self.pages:
+            if setting_page.name == name:
+                self.current_page = setting_page.page
+                self.current_button = setting_page.button
+                self.current_button.config(bg=ACCENT_COLOR)
+        
+        self.current_page.pack(fill=tk.BOTH, expand=True)
+        

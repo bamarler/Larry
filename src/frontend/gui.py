@@ -5,7 +5,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))))
 
-from src.backend.constants import *
+from src.frontend.ui_constants import *
 from src.frontend.widgets.settings import Settings
 from src.frontend.widgets.chat_window import ChatWindow
 
@@ -54,14 +54,17 @@ class GUI:
         # Create a frame container to hold the main content
         self.frame_container = tk.Frame(self.root, bg=ACCENT_COLOR)
         self.frame_container.pack(fill=tk.BOTH, expand=True)
+        self.frame_container.propagate(False)
 
         # Create the chat window widget
         self.chat_window = ChatWindow(self.frame_container)
-        self.chat_window.pack(fill=tk.BOTH, expand=True)
 
         # Create the settings widget
         self.settings = Settings(self.frame_container)
         self.settings_open = False
+
+        # Pack Chat Window Initially
+        self.chat_window.pack(fill=tk.BOTH, expand=True)
 
         self.side = "right"
         self.enable_edge_resizing()
@@ -110,12 +113,15 @@ class GUI:
     def toggle_settings(self):
         if self.settings_open:
             self.settings.pack_forget()
+            self.chat_window.pack(fill=tk.BOTH, expand=True)
+            self.chat_window.refresh()
+
             self.settings_open = False
             self.settings_button.config(text="⚙")
-            self.chat_window.pack(fill=tk.BOTH, expand=True)
         else:
             self.chat_window.pack_forget()
             self.settings.pack(fill=tk.BOTH, expand=True)
+
             self.settings_open = True
             self.settings_button.config(text="<<")
     

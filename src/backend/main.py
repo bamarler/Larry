@@ -52,7 +52,7 @@ def check_and_install_ollama():
 
 def set_ollama_models_directory():
     # Ensure Model Folder Exists
-    model_folder = "ollama_models"
+    model_folder = "ollama-models"
     if not os.path.exists(model_folder):
         os.makedirs(model_folder)
     
