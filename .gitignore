@@ -27,7 +27,7 @@ share/python-wheels/
 MANIFEST
 
 # ollama
-ollama_models
+ollama-models
 chats
 system
 ollama-installer.exe
