@@ -15,7 +15,7 @@ class DownloadSettingsPage(SettingsPage):
 
         # Initialize Model Manager
         self.model_manager = ModelManager()
-
+        
         # Entry field for model name
         self.model_name_var = tk.StringVar()
         self.model_entry = tk.Entry(self.page, textvariable=self.model_name_var, font=(FONT, FONTSIZE), bg=BACKGROUND_COLOR, fg=TEXT_COLOR, bd=0)
