@@ -1,13 +1,15 @@
 import subprocess
-import os
-import sys
 import time
 import atexit
 import urllib.request
 import psutil
+import os
+import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))))
+
 from src.frontend.gui import GUI
+from src.backend.system_manager import SystemManager
 
 ollama_process = None
 
@@ -97,8 +99,8 @@ def main():
     stop_ollama_app()
     start_ollama_server()
     atexit.register(stop_ollama_server)
+    SystemManager()
     gui = GUI()
-    #gui.show_chat_page()
     gui.root.mainloop()
 
 if __name__ == "__main__":

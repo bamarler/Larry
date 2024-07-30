@@ -8,6 +8,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.realp
 from src.frontend.ui_constants import *
 from src.backend.chat_manager import ChatManager
 from src.backend.model_manager import ModelManager
+from src.frontend.widgets.chat_widgets.entry_field import EntryField
 
 class ChatWindow(tk.Frame):
     def __init__(self, parent):
@@ -22,9 +23,9 @@ class ChatWindow(tk.Frame):
         self.top_frame.pack(fill=tk.X)
 
         # Configure grid layout for the top frame
-        self.top_frame.grid_columnconfigure(0, weight=1)
-        self.top_frame.grid_columnconfigure(1, weight=1)
-        self.top_frame.grid_columnconfigure(2, weight=1)
+        self.top_frame.grid_columnconfigure(0, weight=1, uniform="column")
+        self.top_frame.grid_columnconfigure(1, weight=1, uniform="column")
+        self.top_frame.grid_columnconfigure(2, weight=1, uniform="column")
 
         # Define the style for the Combobox
         style = ttk.Style()
@@ -45,10 +46,6 @@ class ChatWindow(tk.Frame):
         self.chat_dropdown.grid(row=0, column=0, padx=10, sticky='w')
         self.chat_dropdown.bind("<<ComboboxSelected>>", self.change_chat)
 
-        # Add a remove chat button
-        self.new_chat_button = tk.Button(self.top_frame, text="-", command=self.remove_chat, font=(FONT, FONTSIZE), bg=BACKGROUND_COLOR, fg=TEXT_COLOR, bd=0)
-        self.new_chat_button.grid(row=0, column=0, padx=5, pady=5, sticky="e")
-
         # Add a dropdown menu for model selection
         self.selected_model = tk.StringVar()
         self.model_dropdown = ttk.Combobox(self.top_frame, textvariable=self.selected_model, state='readonly', font=(FONT, FONTSIZE))
@@ -65,6 +62,10 @@ class ChatWindow(tk.Frame):
         # Initialize Model List
         self.selected_model.set(self.model_manager.current_model)
         self.refresh_model_list()
+
+        # Create and pack the entry field at the bottom
+        self.entry_field = EntryField(self)
+        self.entry_field.pack(fill=tk.X, side=tk.BOTTOM, pady=10, padx=10)
     
     def refresh(self):
         self.refresh_chat_list()

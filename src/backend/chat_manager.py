@@ -1,7 +1,19 @@
 import os
 import glob
 
-class ChatManager:
+class SingletonMeta(type):
+    """
+    A Singleton metaclass that ensures a class has only one instance.
+    """
+    _instances = {}
+
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            instance = super().__call__(*args, **kwargs)
+            cls._instances[cls] = instance
+        return cls._instances[cls]
+
+class ChatManager(metaclass=SingletonMeta):
     def __init__(self, chat_folder='chats'):
         self.chat_folder = chat_folder
         if not os.path.exists(self.chat_folder):
