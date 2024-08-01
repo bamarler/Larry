@@ -43,7 +43,6 @@ class ModelManager:
             print("No current chat selected.")
             return
 
-        chat_file_path = self.chat_manager.get_current_chat_path()
         message_history = []
 
         # Initialize SystemManager to get the system message
@@ -54,24 +53,10 @@ class ModelManager:
                 system_message = system_file.read().strip()
                 message_history.append({'role': 'system', 'content': system_message})
 
-        # Read the current chat history
-        if os.path.exists(chat_file_path):
-            with open(chat_file_path, 'r', encoding='utf-8') as chat_file:
-                lines = chat_file.readlines()
-                role = None
-                for line in lines:
-                    stripped_line = line.strip()
-                    if stripped_line.startswith("user:"):
-                        role = "user"
-                        content = stripped_line[5:].strip()
-                    elif stripped_line.startswith("assistant:"):
-                        role = "assistant"
-                        content = stripped_line[10:].strip()
-                    else:
-                        content = stripped_line
-
-                    if role and content:
-                        message_history.append({'role': role, 'content': content})
+        # Read the current chat history from the database
+        messages = self.chat_manager.get_messages()
+        for role, content in messages:
+            message_history.append({'role': role, 'content': content})
 
         # Add the new user prompt to the message history
         message_history.append({'role': 'user', 'content': prompt})
@@ -83,13 +68,16 @@ class ModelManager:
             stream=True,
         )
 
-        # Write the new prompt and response to the chat file
-        with open(chat_file_path, 'a', encoding='utf-8') as chat_file:
-            chat_file.write(f"\n\nuser: {prompt}\nassistant: ")
+        # Save the new user message to the database
+        self.chat_manager.add_message('user', prompt)
+
+        # Start a new assistant message in the database
+        assistant_message_id = self.chat_manager.add_message('assistant', '')
+
+        # Append chunks to the assistant message in the database
         for chunk in response:
             message = chunk['message']['content']
-            with open(chat_file_path, 'a', encoding='utf-8') as chat_file:
-                chat_file.write(f"{message}")
+            self.chat_manager.update_message(assistant_message_id, message)
 
         print("Message sent and response received.")
 
