@@ -9,8 +9,10 @@ from src.frontend.ui_constants import *
 from src.backend.model_manager import ModelManager
 
 class EntryField(tk.Frame):
-    def __init__(self, parent):
+    def __init__(self, parent, send_function):
         super().__init__(parent, bg=ACCENT_COLOR)
+        
+        self.send_function = send_function
 
         # Initialize Model Manager
         self.model_manager = ModelManager()
@@ -27,6 +29,7 @@ class EntryField(tk.Frame):
         self.entry.bind("<Return>", self.send_message_event)
         self.entry.bind("<Control-Return>", self.new_line)
         self.entry.bind("<Shift-Return>", self.new_line)
+        self.entry.bind("<KeyRelease>", self.check_line_width)  # Bind the new method to KeyRelease
         self.entry.bind("<KeyRelease>", self.resize_entry_field)
 
         # Create the send button
@@ -47,18 +50,18 @@ class EntryField(tk.Frame):
 
     def send_message(self):
         """Send the user's message."""
-        install_thread = threading.Thread(target=self.thread_send)
-        install_thread.start()            
-            
-    def thread_send(self):
         user_input = self.entry.get("1.0", "end-1c").strip()
         if user_input and self.ready_to_send:
             self.entry.delete("1.0", "end")
             self.ready_to_send = False
             self.send_button.config(text="◼")
-            self.model_manager.send_message(user_input)
-            self.send_button.config(text="►")
-            self.ready_to_send = True
+            
+            install_thread = threading.Thread(target=lambda: self.send_function(user_input))
+            install_thread.start()
+            
+    def message_sent(self):
+        self.send_button.config(text="►")
+        self.ready_to_send = True
 
     def new_line(self, event=None):
         """Insert a new line in the entry field when Ctrl+Return is pressed."""
@@ -75,3 +78,23 @@ class EntryField(tk.Frame):
             self.entry.config(height=line_count)
         else:
             self.entry.config(height=max_lines)
+
+    def check_line_width(self, event=None):
+        """Check if the width of the text on the current line exceeds the width of the field, and if so, insert a newline."""
+        # Get the current line index
+        current_index = self.entry.index(tk.INSERT)
+        line_start = f"{current_index.split('.')[0]}.0"
+        line_end = self.entry.index(f"{current_index.split('.')[0]}.end")
+
+        # Get the width of the text on the current line
+        line_text = self.entry.get(line_start, line_end)
+
+        # Calculate the pixel width of the text
+        pixel_width = self.entry.bbox(line_start)[2]
+
+        # Get the pixel width of the text widget
+        widget_width = self.entry.winfo_width()
+
+        # Insert a newline if the text width exceeds the widget width
+        if pixel_width + 1 > widget_width:
+            self.entry.insert(line_end, "\n")

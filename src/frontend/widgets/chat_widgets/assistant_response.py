@@ -21,12 +21,27 @@ class AssistantResponse(tk.Frame):
         self.html_label.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
         self.current_text = initial_text
+        self.update_pending = False
+    
+    def get_text(self):
+        return self.current_text
 
     def set_text(self, text):
         self.current_text = text
+        self.schedule_update()
+    
+    def insert_text(self, text):
+        self.set_text(self.current_text + text)
+    
+    def schedule_update(self):
+        if not self.update_pending:
+            self.update_pending = True
+            self.after(100, self.update_html_label)
+    
+    def update_html_label(self):
         formatted_text = self.format_assistant_message(self.current_text)
         self.html_label.set_html(formatted_text)  # Update the HTML content
-        #self.html_label.config(height=self.html_label.winfo_reqheight())
+        self.update_pending = False
 
     def format_assistant_message(self, message):
         """Format an assistant message for HTML display."""

@@ -67,7 +67,7 @@ class ChatWindow(tk.Frame):
         self.selected_model.set(self.model_manager.current_model)
 
         # Create and pack the entry field at the bottom
-        self.entry_field = EntryField(self)
+        self.entry_field = EntryField(self, self.send_message)
         self.entry_field.pack(fill=tk.X, side=tk.BOTTOM, pady=10, padx=10)
 
         # Manage Chat Feed
@@ -95,9 +95,6 @@ class ChatWindow(tk.Frame):
         # Create new chat
         self.create_new_chat()
 
-        # Initialize chat feed updating
-        self.init_chat_monitoring()
-
     def refresh(self):
         self.refresh_chat_list()
         self.refresh_model_list()
@@ -121,7 +118,7 @@ class ChatWindow(tk.Frame):
                 widget.destroy()
             self.last_message_count = 0  # Reset message count
             self.scroll_to_top()
-            self.update_chat_feed()
+            self.load_chat()
 
     def create_new_chat(self):
         self.chat_manager.create_new_chat()
@@ -156,44 +153,43 @@ class ChatWindow(tk.Frame):
         self.chat_canvas.update_idletasks()  # Ensure all pending updates are applied
         self.chat_canvas.yview_moveto(0.0)  # Scroll to the top
 
-
-    def init_chat_monitoring(self):
-        self.update_chat_feed()
-        threading.Thread(target=self.update_chat_feed_continuously, daemon=True).start()
-
-    def update_chat_feed(self):
+    def load_chat(self):
         messages = self.chat_manager.get_messages()
-        new_messages = messages[self.last_message_count:]
 
-        if new_messages:
-            buffer_content = ""
-            buffer_widgets = []
+        for role, content in messages[self.last_message_count:]:
+            if role == 'user':
+                widget = UserPrompt(self.chat_frame)
+                widget.set_text(content.strip())
+                widget.pack(padx=10, pady=5, anchor='e')
+            elif role == 'assistant':
+                widget = AssistantResponse(self.chat_frame)
+                widget.set_text(content.strip())
+                widget.pack(fill=tk.X, padx=10, pady=5, anchor='w')
 
-            for role, content in new_messages:
-                if role == 'user':
-                    widget = UserPrompt(self.chat_frame)
-                    widget.set_text(content.strip())
-                    buffer_widgets.append((widget, {'padx': 10, 'pady': 5, 'anchor': 'e'}))
-                elif role == 'assistant':
-                    widget = AssistantResponse(self.chat_frame)
-                    widget.set_text(content.strip())
-                    buffer_widgets.append((widget, {'fill': tk.X, 'padx': 10, 'pady': 5, 'anchor': 'w'}))
-                buffer_content += content.strip() + "\n"
-
-            # Apply the buffered updates to the UI
-            for widget, options in buffer_widgets:
-                widget.pack(**options)
-
-            self.last_message_count = len(messages)
-            self.scroll_to_bottom()
-        elif not self.entry_field.ready_to_send and messages:
-            last_role, last_content = messages[-1]
-            last_widget = self.chat_frame.winfo_children()[-1]  # Get the last widget
-
-            last_widget.set_text(last_content.strip())
             self.scroll_to_bottom()
 
-    def update_chat_feed_continuously(self):
-        while True:
-            self.update_chat_feed()
-            time.sleep(0.1)  # Add a small delay to reduce CPU usage
+    def send_message(self, prompt):
+        # Save the new user message to the database
+        self.chat_manager.add_message('user', prompt)
+
+        prompt_widget = UserPrompt(self.chat_frame)
+        prompt_widget.set_text(prompt)
+        prompt_widget.pack(padx=10, pady=5, anchor='e')
+        self.scroll_to_bottom()
+
+        # Start a new assistant message in the database
+        assistant_message_id = self.chat_manager.add_message('assistant', '')
+        
+        response_widget = AssistantResponse(self.chat_frame)
+        response_widget.pack(fill=tk.X, padx=10, pady=5, anchor='w')
+        self.scroll_to_bottom()
+
+        response = self.model_manager.send_message(prompt)
+
+        for chunk in response:
+            chunk_content = chunk['message']['content']
+            self.chat_manager.update_message(assistant_message_id, chunk_content)
+            response_widget.insert_text(chunk_content)
+            self.scroll_to_bottom()
+
+        self.entry_field.message_sent()

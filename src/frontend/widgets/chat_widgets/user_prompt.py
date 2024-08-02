@@ -14,7 +14,12 @@ class UserPrompt(tk.Frame):
 
         self.text_widget = tk.Text(self, wrap=tk.WORD, state=tk.DISABLED, font=(FONT, FONTSIZE), bg=ACCENT_COLOR, fg=TEXT_COLOR, bd=0)
         self.text_widget.pack(side=tk.TOP, padx=10, pady=10, fill=tk.NONE)
-    
+
+        self.bind('<KeyRelease>', self._resize)
+
+    def get_text(self):
+        return self.text_widget.text_widget.get("1.0", "end-1c")
+
     def set_text(self, text):
         self.text_widget.config(state=tk.NORMAL)  # Make the text widget editable
         self.text_widget.delete('1.0', tk.END)  # Clear existing text

@@ -1,4 +1,5 @@
 import ollama
+import threading
 import os
 import sys
 
@@ -7,7 +8,19 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.realp
 from src.backend.chat_manager import ChatManager
 from src.backend.system_manager import SystemManager
 
-class ModelManager:
+class SingletonMeta(type):
+    """
+    A Singleton metaclass that ensures a class has only one instance.
+    """
+    _instances = {}
+
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            instance = super().__call__(*args, **kwargs)
+            cls._instances[cls] = instance
+        return cls._instances[cls]
+    
+class ModelManager(metaclass=SingletonMeta):
     def __init__(self):
         self.current_model = None
 
@@ -62,22 +75,8 @@ class ModelManager:
         message_history.append({'role': 'user', 'content': prompt})
 
         # Send the message to the model
-        response = ollama.chat(
+        return ollama.chat(
             model=self.current_model,
             messages=message_history,
             stream=True,
         )
-
-        # Save the new user message to the database
-        self.chat_manager.add_message('user', prompt)
-
-        # Start a new assistant message in the database
-        assistant_message_id = self.chat_manager.add_message('assistant', '')
-
-        # Append chunks to the assistant message in the database
-        for chunk in response:
-            message = chunk['message']['content']
-            self.chat_manager.update_message(assistant_message_id, message)
-
-        print("Message sent and response received.")
-

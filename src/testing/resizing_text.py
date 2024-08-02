@@ -17,12 +17,22 @@ def main():
     root = tk.Tk()
     root.title("Auto Scaling Text Widget")
 
+    # Create a main frame with fixed size
+    main_frame = tk.Frame(root, width=500, height=1000, bg='#1E1E1E')
+    main_frame.pack(side='right', fill='y')
+    main_frame.pack_propagate(False)  # Prevent the frame from resizing to fit the text widget
+
+    # Create a sub-frame with padding inside the main frame
+    sub_frame = tk.Frame(main_frame, bg='#2C2F33')
+    sub_frame.pack(side='right')
+
     # Create an instance of AutoScalingText with initial size 1x1
-    auto_text = AutoScalingText(root, height=1, width=1)
-    auto_text.pack()
+    auto_text = AutoScalingText(sub_frame, height=1, width=1)
+    auto_text.pack(padx=10, pady=10)
 
     # Insert some initial text
     auto_text.insert('1.0', "Type here...")
+    auto_text._resize()
 
     root.mainloop()
 
