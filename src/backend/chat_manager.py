@@ -37,7 +37,7 @@ class ChatManager(metaclass=SingletonMeta):
         if self.current_chat_id:
             # Check if the current chat is empty before switching
             if not self.get_messages():
-                self.remove_chat()
+                self.remove_current_chat()
         chat_id = self.db_manager.get_chat_id(chat_name)
         if chat_id:
             self.current_chat_id = chat_id[0]
@@ -64,17 +64,23 @@ class ChatManager(metaclass=SingletonMeta):
             return self.db_manager.get_messages(self.current_chat_id)
         return []
 
-    def remove_chat(self):
-        if self.current_chat_id:
-            current_chat_index = self.db_manager.list_chats().index(self.current_chat_name)
-            self.db_manager.remove_chat(self.current_chat_id)
-            chat_list = self.list_chats()
-            if chat_list:
-                new_chat_index = min(current_chat_index, len(chat_list) - 1)
-                next_chat_name = chat_list[new_chat_index]
-                next_chat_id = self.db_manager.get_chat_id(next_chat_name)[0]
-                self.current_chat_id = next_chat_id
-                self.current_chat_name = next_chat_name
-            else:
-                self.current_chat_id = None
-                self.current_chat_name = None
+    def remove_chat(self, chat_name):
+        chat_id = self.db_manager.get_chat_id(chat_name)
+        if chat_id:
+            self.db_manager.remove_chat(chat_id[0])
+    
+    def remove_current_chat(self):
+        if self.current_chat_name:
+            self.remove_chat(self.current_chat_name)
+            self.current_chat_id = None
+            self.current_chat_name = None
+    
+    def rename_chat(self, chat_name, new_name):
+        chat_id = self.db_manager.get_chat_id(chat_name)
+        if chat_id:
+            self.db_manager.rename_chat(chat_id[0], new_name)
+
+    def rename_current_chat(self, new_name):
+        if self.current_chat_name:
+            self.rename_chat(self.current_chat_name, new_name)
+            self.current_chat_name = new_name

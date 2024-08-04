@@ -101,5 +101,6 @@ class ModelManager(metaclass=SingletonMeta):
                 "mirostat_eta":model_settings["mirostat_eta"],
                 "num_thread":model_settings["num_thread"],
                 "num_ctx":model_settings["num_ctx"],
-            }
+            },
+            images=None,
         )

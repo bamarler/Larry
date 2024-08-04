@@ -93,10 +93,11 @@ class ChatWindow(tk.Frame):
         self.chat_canvas.bind("<Leave>", self._unbind_from_mousewheel)
 
         self.chat_frame = tk.Frame(self.chat_canvas, bg=BACKGROUND_COLOR)
-        self.chat_canvas.create_window((0, 0), window=self.chat_frame, anchor='nw')
+        self.chat_canvas_window = self.chat_canvas.create_window((0, 0), window=self.chat_frame, anchor='nw')
 
-        self.chat_frame.bind("<Configure>", lambda e: self.chat_canvas.configure(scrollregion=self.chat_canvas.bbox("all")))
-        
+        self.chat_frame.bind("<Configure>", self.on_frame_configure)
+        self.chat_canvas.bind("<Configure>", self.on_canvas_configure)
+
         self.refresh()
 
         # Create new chat
@@ -107,6 +108,19 @@ class ChatWindow(tk.Frame):
 
     def _unbind_from_mousewheel(self, event):
         self.chat_canvas.unbind_all("<MouseWheel>")
+    
+    def _on_mouse_wheel(self, event):
+        if event.num == 5 or event.delta == -120:
+            self.chat_canvas.yview_scroll(1, "units")
+        if event.num == 4 or event.delta == 120:
+            self.chat_canvas.yview_scroll(-1, "units")
+    
+    def on_frame_configure(self, event):
+        self.chat_canvas.configure(scrollregion=self.chat_canvas.bbox("all"))
+        self.chat_canvas.itemconfig(self.chat_canvas_window, width=event.width)
+
+    def on_canvas_configure(self, event):
+        self.chat_canvas.itemconfig(self.chat_canvas_window, width=event.width)
 
     def refresh(self):
         self.refresh_chat_list()
@@ -150,12 +164,6 @@ class ChatWindow(tk.Frame):
         if selected_model:
             self.model_manager.change_model(selected_model)
             self.refresh_model_list()
-    
-    def _on_mouse_wheel(self, event):
-        if event.num == 5 or event.delta == -120:
-            self.chat_canvas.yview_scroll(1, "units")
-        if event.num == 4 or event.delta == 120:
-            self.chat_canvas.yview_scroll(-1, "units")
     
     def scroll_to_bottom(self):
         self.chat_canvas.update_idletasks()  # Ensure all pending updates are applied

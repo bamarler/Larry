@@ -70,3 +70,9 @@ class DatabaseManager:
             cursor.execute('DELETE FROM messages WHERE chat_id = ?', (chat_id,))
             cursor.execute('DELETE FROM chats WHERE id = ?', (chat_id,))
             conn.commit()
+
+    def rename_chat(self, chat_id, new_name):
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute('UPDATE chats SET name = ? WHERE id = ?', (new_name, chat_id))
+            conn.commit()
