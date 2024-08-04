@@ -7,12 +7,19 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))))
 
-from src.frontend.ui_constants import *
+from src.frontend.ui_constants import ui_constants
 from src.backend.chat_manager import ChatManager
 from src.backend.model_manager import ModelManager
 from src.frontend.widgets.chat_widgets.entry_field import EntryField
 from src.frontend.widgets.chat_widgets.user_prompt import UserPrompt
 from src.frontend.widgets.chat_widgets.assistant_response import AssistantResponse
+
+FONT = ui_constants.FONT
+FONTSIZE = ui_constants.FONTSIZE
+BACKGROUND_COLOR = ui_constants.BACKGROUND_COLOR
+HEADER_COLOR = ui_constants.HEADER_COLOR
+ACCENT_COLOR = ui_constants.ACCENT_COLOR
+TEXT_COLOR = ui_constants.TEXT_COLOR
 
 class ChatWindow(tk.Frame):
     def __init__(self, parent):
@@ -128,7 +135,8 @@ class ChatWindow(tk.Frame):
         self.change_chat()
     
     def refresh_model_list(self):
-        self.model_dropdown['values'] = self.model_manager.list_models()
+        model_names = self.model_manager.list_models()
+        self.model_dropdown['values'] = [model for model in model_names if model != self.model_manager.current_model]
 
     def change_model(self, event=None):
         selected_model = self.selected_model.get()

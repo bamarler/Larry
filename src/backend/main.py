@@ -10,6 +10,9 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.realp
 
 from src.frontend.gui import GUI
 from src.backend.system_manager import SystemManager
+from src.backend.chat_manager import ChatManager
+from src.backend.model_manager import ModelManager
+from src.backend.settings_manager import SettingsManager
 
 ollama_process = None
 
@@ -100,6 +103,9 @@ def main():
     start_ollama_server()
     atexit.register(stop_ollama_server)
     SystemManager()
+    ChatManager()
+    ModelManager()
+    SettingsManager()
     gui = GUI()
     gui.root.mainloop()
 

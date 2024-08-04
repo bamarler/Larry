@@ -4,11 +4,18 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))))
 
-from src.frontend.ui_constants import *
-from src.frontend.widgets.settings_widgets.model_settings import ModelSettingsPage
+from src.frontend.ui_constants import ui_constants
+from src.frontend.widgets.settings_widgets.model_settings_page import ModelSettingsPage
 from src.frontend.widgets.settings_widgets.download_settings_page import DownloadSettingsPage
-from src.frontend.widgets.settings_widgets.system_text_settings import SystemTextSettingsPage
-from src.frontend.widgets.settings_widgets.theme_settings import ThemeSettingsPage
+from src.frontend.widgets.settings_widgets.system_text_settings_page import SystemTextSettingsPage
+from src.frontend.widgets.settings_widgets.ui_settings_page import UISettingsPage
+
+FONT = ui_constants.FONT
+FONTSIZE = ui_constants.FONTSIZE
+BACKGROUND_COLOR = ui_constants.BACKGROUND_COLOR
+HEADER_COLOR = ui_constants.HEADER_COLOR
+ACCENT_COLOR = ui_constants.ACCENT_COLOR
+TEXT_COLOR = ui_constants.TEXT_COLOR
 
 class Settings(tk.Frame):
     def __init__(self, parent):
@@ -30,7 +37,7 @@ class Settings(tk.Frame):
         self.model_settings = ModelSettingsPage(self)
         self.download_settings = DownloadSettingsPage(self)
         self.system_text_settings = SystemTextSettingsPage(self)
-        self.theme_settings = ThemeSettingsPage(self)
+        self.ui_settings = UISettingsPage(self)
 
         # Initialize list to keep track of buttons and pages
         self.pages = []
@@ -44,7 +51,7 @@ class Settings(tk.Frame):
         self.pages.append(self.model_settings)
         self.pages.append(self.download_settings)
         self.pages.append(self.system_text_settings)
-        self.pages.append(self.theme_settings)
+        self.pages.append(self.ui_settings)
 
         for page in self.pages:
             page.button.pack(fill=tk.BOTH, padx=10, pady=5)
