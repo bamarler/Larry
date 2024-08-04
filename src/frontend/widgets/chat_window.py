@@ -112,18 +112,15 @@ class ChatWindow(tk.Frame):
         if selected_chat:
             self.chat_manager.change_chat(selected_chat)
             self.refresh()
-            # Clear the canvas of any widgets
-            for widget in self.chat_frame.winfo_children():
-                widget.pack_forget()
-                widget.destroy()
-            self.last_message_count = 0  # Reset message count
-            self.scroll_to_top()
             self.load_chat()
+            self.scroll_to_bottom()
 
     def create_new_chat(self):
-        self.chat_manager.create_new_chat()
-        self.selected_chat.set(self.chat_manager.get_current_chat())
-        self.refresh()
+        new_chat_name = self.chat_manager.create_new_chat()
+        if self.selected_chat.get() == new_chat_name:
+            return
+        self.selected_chat.set(new_chat_name)
+        self.change_chat()
     
     def remove_chat(self):
         self.chat_manager.remove_chat()
@@ -154,6 +151,13 @@ class ChatWindow(tk.Frame):
         self.chat_canvas.yview_moveto(0.0)  # Scroll to the top
 
     def load_chat(self):
+        # Clear the canvas of any widgets
+        for widget in self.chat_frame.winfo_children():
+            widget.pack_forget()
+            widget.destroy()
+        self.last_message_count = 0  # Reset message count
+        self.scroll_to_top()
+        
         messages = self.chat_manager.get_messages()
 
         for role, content in messages[self.last_message_count:]:

@@ -19,6 +19,7 @@ class AssistantResponse(tk.Frame):
         # Set up the HTMLLabel with initial text
         self.html_label = HTMLLabel(self, html=self.format_assistant_message(initial_text), background=BACKGROUND_COLOR, foreground=TEXT_COLOR)
         self.html_label.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        self.html_label.fit_height()
 
         self.current_text = initial_text
         self.update_pending = False
@@ -41,6 +42,7 @@ class AssistantResponse(tk.Frame):
     def update_html_label(self):
         formatted_text = self.format_assistant_message(self.current_text)
         self.html_label.set_html(formatted_text)  # Update the HTML content
+        self.html_label.fit_height()
         self.update_pending = False
 
     def format_assistant_message(self, message):

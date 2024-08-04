@@ -24,9 +24,14 @@ class ChatManager(metaclass=SingletonMeta):
         self.current_chat_name = None
 
     def create_new_chat(self):
+        if self.current_chat_name != None:
+            # Check if the current chat is empty before switching
+            if not self.get_messages():
+                return self.current_chat_name
+        
         chat_name = f"Untitled Chat {len(self.db_manager.list_chats()) + 1}"
         self.db_manager.create_chat(chat_name)
-        self.change_chat(chat_name)
+        return chat_name
 
     def change_chat(self, chat_name):
         if self.current_chat_id:
