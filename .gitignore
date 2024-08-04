@@ -1,3 +1,10 @@
+# larry
+ollama-models
+chats
+system
+settings
+ollama-installer.exe
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -25,12 +32,6 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
-
-# ollama
-ollama-models
-chats
-system
-ollama-installer.exe
 
 # PyInstaller
 #  Usually these files are written by a python script from a template

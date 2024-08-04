@@ -1,12 +1,18 @@
 import subprocess
-import os
-import sys
 import time
 import atexit
 import urllib.request
+import psutil
+import os
+import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))))
-from src.frontend.chat_window import ChatWindow
+
+from src.frontend.gui import GUI
+from src.backend.system_manager import SystemManager
+from src.backend.chat_manager import ChatManager
+from src.backend.model_manager import ModelManager
+from src.backend.settings_manager import SettingsManager
 
 ollama_process = None
 
@@ -79,12 +85,16 @@ def stop_ollama_server():
         print("Ollama server stopped.")
     
 def stop_ollama_app():
-    # Kill any other running ollama processes using taskkill
-    try:
-        subprocess.run(["taskkill", "/f", "/im", "Ollama.exe"], check=True)
-        print("Terminated any running Ollama processes.")
-    except subprocess.CalledProcessError as e:
-        print(f"Failed to terminate Ollama process: {e}")
+    for proc in psutil.process_iter(['pid', 'name']):
+        try:
+            # Check if the process name contains "ollama" (case insensitive)
+            if 'ollama' in proc.info['name'].lower():
+                print(f"Terminating process {proc.info['name']} with PID {proc.info['pid']}")
+                proc.terminate()  # Graceful termination
+                proc.wait(timeout=3)  # Wait for the process to terminate
+                print(f"Process {proc.info['pid']} terminated successfully.")
+        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess) as e:
+            print(f"Could not terminate process {proc.info['pid']}: {e}")
 
 def main():
     set_ollama_models_directory()
@@ -92,9 +102,12 @@ def main():
     stop_ollama_app()
     start_ollama_server()
     atexit.register(stop_ollama_server)
-    chat_window = ChatWindow()
-    chat_window.show_chat_page()
-    chat_window.root.mainloop()
+    SystemManager()
+    ChatManager()
+    ModelManager()
+    SettingsManager()
+    gui = GUI()
+    gui.root.mainloop()
 
 if __name__ == "__main__":
     main()
