@@ -21,4 +21,4 @@ class SettingsPage():
         self.button = SettingsButton(parent.sidebar_frame, text=self.name, command=lambda: parent.show_page(self.name))
 
         self.page = tk.Frame(parent.main_frame)
-        self.page.config(bg=BACKGROUND_COLOR)
+        self.page.config(bg=BACKGROUND_COLOR, padx=5, pady=5)

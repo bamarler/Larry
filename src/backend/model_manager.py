@@ -7,6 +7,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.realp
 
 from src.backend.chat_manager import ChatManager
 from src.backend.system_manager import SystemManager
+from src.backend.settings_manager import SettingsManager
 
 class SingletonMeta(type):
     """
@@ -26,6 +27,9 @@ class ModelManager(metaclass=SingletonMeta):
 
         # Initialize Chat Manager
         self.chat_manager = ChatManager()
+
+        # Initialize Settings Manager
+        self.settings_manager = SettingsManager()
 
         try:
             self.current_model = self.list_models()[0]
@@ -76,9 +80,26 @@ class ModelManager(metaclass=SingletonMeta):
         # Add the new user prompt to the message history
         message_history.append({'role': 'user', 'content': prompt})
 
+        model_settings = self.settings_manager.get_model_settings()
+
         # Send the message to the model
         return ollama.chat(
             model=self.current_model,
             messages=message_history,
             stream=True,
+            options={
+                "temperature":model_settings["temperature"],
+                "top_k":model_settings["top_k"],
+                "top_p":model_settings["top_p"],
+                "num_predict":model_settings["num_predict"],
+                "frequency_penalty":model_settings["frequency_penalty"],
+                "presence_penalty":model_settings["presence_penalty"],
+                "repeat_penalty":model_settings["repeat_penalty"],
+                "repeat_last_n":model_settings["repeat_last_n"],
+                "mirostat":model_settings["mirostat"],
+                "mirostat_tau":model_settings["mirostat_tau"],
+                "mirostat_eta":model_settings["mirostat_eta"],
+                "num_thread":model_settings["num_thread"],
+                "num_ctx":model_settings["num_ctx"],
+            }
         )

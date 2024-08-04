@@ -24,7 +24,7 @@ class DownloadSettingsPage(SettingsPage):
         self.model_manager = ModelManager()
         
         # Create header label
-        header_label = tk.Label(self.page, text="Models", font=(FONT, FONTSIZE, 'bold'), bg=HEADER_COLOR, fg=TEXT_COLOR)
+        header_label = tk.Label(self.page, text="Models", font=(FONT, FONTSIZE, 'bold'), bg=BACKGROUND_COLOR, fg=TEXT_COLOR)
         header_label.pack(pady=10)
 
         # Create the main frame for the lists
@@ -119,11 +119,3 @@ class DownloadSettingsPage(SettingsPage):
         self.status_label.config(text=f"{ollama_remove['status']}")
         self.status_label.config(text=f"{model_name} successfully removed")
         self.load_models()  # Update lists
-
-# Usage example for standalone testing
-if __name__ == "__main__":
-    root = tk.Tk()
-    root.geometry("600x400")
-    page = DownloadSettingsPage(root)
-    page.pack(fill=tk.BOTH, expand=True)
-    root.mainloop()

@@ -88,9 +88,9 @@ class ChatWindow(tk.Frame):
         self.chat_canvas.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
         self.scrollbar.config(command=self.chat_canvas.yview)
 
-        self.chat_canvas.bind_all("<MouseWheel>", self._on_mouse_wheel)
-        self.chat_canvas.bind_all("<Button-4>", self._on_mouse_wheel)
-        self.chat_canvas.bind_all("<Button-5>", self._on_mouse_wheel)
+        # Bind mouse wheel to scroll
+        self.chat_canvas.bind("<Enter>", self._bind_to_mousewheel)
+        self.chat_canvas.bind("<Leave>", self._unbind_from_mousewheel)
 
         self.chat_frame = tk.Frame(self.chat_canvas, bg=BACKGROUND_COLOR)
         self.chat_canvas.create_window((0, 0), window=self.chat_frame, anchor='nw')
@@ -101,6 +101,12 @@ class ChatWindow(tk.Frame):
 
         # Create new chat
         self.create_new_chat()
+
+    def _bind_to_mousewheel(self, event):
+        self.chat_canvas.bind_all("<MouseWheel>", self._on_mouse_wheel)
+
+    def _unbind_from_mousewheel(self, event):
+        self.chat_canvas.unbind_all("<MouseWheel>")
 
     def refresh(self):
         self.refresh_chat_list()
@@ -118,6 +124,7 @@ class ChatWindow(tk.Frame):
         selected_chat = self.selected_chat.get()
         if selected_chat:
             self.chat_manager.change_chat(selected_chat)
+            self.scroll_to_top()
             self.refresh()
             self.load_chat()
             self.scroll_to_bottom()
@@ -178,7 +185,7 @@ class ChatWindow(tk.Frame):
                 widget.set_text(content.strip())
                 widget.pack(fill=tk.X, padx=10, pady=5, anchor='w')
 
-            self.scroll_to_bottom()
+        self.scroll_to_bottom()
 
     def send_message(self, prompt):
         # Save the new user message to the database
@@ -202,6 +209,5 @@ class ChatWindow(tk.Frame):
             chunk_content = chunk['message']['content']
             self.chat_manager.update_message(assistant_message_id, chunk_content)
             response_widget.insert_text(chunk_content)
-            self.scroll_to_bottom()
 
         self.entry_field.message_sent()

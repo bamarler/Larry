@@ -39,27 +39,23 @@ class SettingsManager:
     def init_model_settings(self):
         model_settings_file = os.path.join(self.settings_folder, self.model_settings_file_name)
         
-        default_model_settings = {
-            "general": {
-                "temperature": 0.7,
-                "top_k": 50,
-                "top_p": 0.9,
-                "num_predict": 100,
-                "frequency_penalty": 0.0
-            },
-            "advanced": {
-                "presence_penalty": 0.0,
-                "repeat_penalty": 1.2,
-                "repeat_last_n": 64,
-                "mirostat": 0,
-                "mirostat_tau": 5.0,
-                "mirostat_eta": 0.1,
-                "num_thread": 8,
-                "num_ctx": 1024
-            }
+        self.default_model_settings = {
+            "temperature": 0.7,
+            "top_k": 50,
+            "top_p": 0.9,
+            "num_predict": 8000,
+            "frequency_penalty": 0.0,
+            "presence_penalty": 0.0,
+            "repeat_penalty": 1.2,
+            "repeat_last_n": 64,
+            "mirostat": 0,
+            "mirostat_tau": 5.0,
+            "mirostat_eta": 0.1,
+            "num_thread": 8,
+            "num_ctx": 1024
         }
 
-        self._ensure_file_exists(model_settings_file, default_model_settings)
+        self._ensure_file_exists(model_settings_file, self.default_model_settings)
 
     def get_model_settings(self):
         return self.read_settings(self.model_settings_file_name)
@@ -71,7 +67,7 @@ class SettingsManager:
     def init_ui_settings(self):
         ui_settings_file = os.path.join(self.settings_folder, self.ui_settings_file_name)
         
-        default_ui_settings = {
+        self.default_ui_settings = {
             "font": "helvetica",
             "fontsize": 10,
             "theme": "dark",
@@ -91,7 +87,7 @@ class SettingsManager:
             }
         }
 
-        self._ensure_file_exists(ui_settings_file, default_ui_settings)
+        self._ensure_file_exists(ui_settings_file, self.default_ui_settings)
 
     def get_ui_settings(self):
         return self.read_settings(self.ui_settings_file_name)
