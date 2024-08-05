@@ -57,6 +57,9 @@ class ModelManager(metaclass=SingletonMeta):
         return ollama.delete(model_name)
     
     def send_message(self, prompt):
+        # Save the new user message to the database
+        self.chat_manager.add_message('user', prompt)
+
         current_chat = self.chat_manager.get_current_chat()
         if not current_chat:
             print("No current chat selected.")
@@ -83,7 +86,7 @@ class ModelManager(metaclass=SingletonMeta):
         model_settings = self.settings_manager.get_model_settings()
 
         # Send the message to the model
-        return ollama.chat(
+        response = ollama.chat(
             model=self.current_model,
             messages=message_history,
             stream=True,
@@ -102,5 +105,15 @@ class ModelManager(metaclass=SingletonMeta):
                 "num_thread":model_settings["num_thread"],
                 "num_ctx":model_settings["num_ctx"],
             },
-            images=None,
         )
+
+        # save the model response to the database
+        response_id = self.chat_manager.add_message('assistant', '')
+
+        response_list = []
+        for chunk in response:
+            chunk_content = chunk['message']['content']
+            self.chat_manager.update_message(response_id, chunk_content)
+            response_list.append(chunk_content)
+
+        return response_list

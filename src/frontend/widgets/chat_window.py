@@ -190,23 +190,19 @@ class ChatWindow(tk.Frame):
                 widget.pack(padx=10, pady=5, anchor='e')
             elif role == 'assistant':
                 widget = AssistantResponse(self.chat_frame)
-                widget.set_text(content.strip())
+                for chunk in content:
+                    widget.insert_text(chunk['message']['content'])
                 widget.pack(fill=tk.X, padx=10, pady=5, anchor='w')
+                
 
         self.scroll_to_bottom()
 
     def send_message(self, prompt):
-        # Save the new user message to the database
-        self.chat_manager.add_message('user', prompt)
-
         prompt_widget = UserPrompt(self.chat_frame)
         prompt_widget.set_text(prompt)
         prompt_widget.pack(padx=10, pady=5, anchor='e')
         self.scroll_to_bottom()
 
-        # Start a new assistant message in the database
-        assistant_message_id = self.chat_manager.add_message('assistant', '')
-        
         response_widget = AssistantResponse(self.chat_frame)
         response_widget.pack(fill=tk.X, padx=10, pady=5, anchor='w')
         self.scroll_to_bottom()
@@ -214,8 +210,6 @@ class ChatWindow(tk.Frame):
         response = self.model_manager.send_message(prompt)
 
         for chunk in response:
-            chunk_content = chunk['message']['content']
-            self.chat_manager.update_message(assistant_message_id, chunk_content)
-            response_widget.insert_text(chunk_content)
+            response_widget.insert_text(chunk)
 
         self.entry_field.message_sent()
