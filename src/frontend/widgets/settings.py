@@ -7,7 +7,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirna
 from src.frontend.ui_constants import ui_constants
 from src.frontend.widgets.settings_widgets.model_settings_page import ModelSettingsPage
 from src.frontend.widgets.settings_widgets.download_settings_page import DownloadSettingsPage
-from src.frontend.widgets.settings_widgets.system_text_settings_page import SystemTextSettingsPage
+from src.frontend.widgets.settings_widgets.agent_settings_page import AgentSettingsPage
 from src.frontend.widgets.settings_widgets.ui_settings_page import UISettingsPage
 
 FONT = ui_constants.FONT
@@ -36,7 +36,7 @@ class Settings(tk.Frame):
         # Initialize Pages
         self.model_settings = ModelSettingsPage(self)
         self.download_settings = DownloadSettingsPage(self)
-        self.system_text_settings = SystemTextSettingsPage(self)
+        self.system_text_settings = AgentSettingsPage(self)
         self.ui_settings = UISettingsPage(self)
 
         # Initialize list to keep track of buttons and pages

@@ -16,6 +16,10 @@ class SettingsManager:
         self.ui_settings_file_name = 'ui_settings.json'
         self.init_ui_settings()
 
+        # Initialize system text settings
+        self.agent_settings_file_name = 'system_text_settings.json'
+        self.init_agent_settings()
+
     def _ensure_folder_exists(self):
         if not os.path.exists(self.settings_folder):
             os.makedirs(self.settings_folder)
@@ -94,3 +98,39 @@ class SettingsManager:
 
     def set_ui_settings(self, new_settings):
         self.write_settings(self.ui_settings_file_name, new_settings)
+    
+    # agent settings methods
+    def init_agent_settings(self):
+        agent_settings_file = os.path.join(self.settings_folder, self.agent_settings_file_name)
+
+        self.default_agent_settings = {
+            "agent": "classic larry",
+            "agents": {
+                "classic larry": {
+                    "name": "Larry",
+                    "role": "a helpful AI assistant",
+                    "personality": "fun, cheery",
+                    "behaviors": {
+                        "0": "end every response with a comment saying you are always open to help and to ask you whatever",
+                        "1": "try to crack a couple jokes in every response"
+                    }
+                },
+                "coding larry": {
+                    "name": "Larry",
+                    "role": "an AI assistant to help with coding and debugging",
+                    "personality": "informative, brief",
+                    "behaviors": {
+                        "0": "add comments periodically describing attributes and methods",
+                        "1": "whenever editing code, add comments wherever you make changes/additions/removals",
+                    },
+                }
+            }
+        }
+
+        self._ensure_file_exists(agent_settings_file, self.default_agent_settings)
+    
+    def get_agent_settings(self):
+        return self.read_settings(self.agent_settings_file_name)
+    
+    def set_agent_settings(self, new_settings):
+        self.write_settings(self.agent_settings_file_name, new_settings)

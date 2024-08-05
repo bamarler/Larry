@@ -24,7 +24,7 @@ class DownloadSettingsPage(SettingsPage):
         self.model_manager = ModelManager()
         
         # Create header label
-        header_label = tk.Label(self.page, text="Models", font=(FONT, FONTSIZE, 'bold'), bg=BACKGROUND_COLOR, fg=TEXT_COLOR)
+        header_label = tk.Label(self.page, text="Manage Models", font=(FONT, FONTSIZE + 4, 'bold'), bg=BACKGROUND_COLOR, fg=TEXT_COLOR)
         header_label.pack(pady=10)
 
         # Create the main frame for the lists

@@ -28,7 +28,7 @@ class UISettingsPage(SettingsPage):
         self.create_save_button()
 
     def create_font_settings(self):
-        font_label = tk.Label(self.page, text="Font Settings", font=(FONT, FONTSIZE, 'bold'), bg=BACKGROUND_COLOR, fg=TEXT_COLOR)
+        font_label = tk.Label(self.page, text="Font Settings", font=(FONT, FONTSIZE + 4, 'bold'), bg=BACKGROUND_COLOR, fg=TEXT_COLOR)
         font_label.pack(pady=10)
 
         font_frame = tk.Frame(self.page, bg=BACKGROUND_COLOR)

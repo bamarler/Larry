@@ -68,7 +68,7 @@ class ModelSettingsPage(SettingsPage):
                 self.canvas.yview_scroll(-1, "units")
 
     def create_settings_page(self, parent_frame):
-        model_label = tk.Label(parent_frame, text="Model Settings", font=(FONT, FONTSIZE, 'bold'), bg=BACKGROUND_COLOR, fg=TEXT_COLOR)
+        model_label = tk.Label(parent_frame, text="Model Options", font=(FONT, FONTSIZE + 4, 'bold'), bg=BACKGROUND_COLOR, fg=TEXT_COLOR)
         model_label.grid(row=0, column=0, columnspan=3, pady=(10, 5), sticky='n')
 
         self.create_slider(parent_frame, 1, "Temperature", "temperature", 0.1, 2.0, 0.1, "Controls the randomness of the predictions. Lower values make the output more deterministic.")

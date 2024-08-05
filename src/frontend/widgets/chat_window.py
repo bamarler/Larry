@@ -191,7 +191,7 @@ class ChatWindow(tk.Frame):
             elif role == 'assistant':
                 widget = AssistantResponse(self.chat_frame)
                 for chunk in content:
-                    widget.insert_text(chunk['message']['content'])
+                    widget.insert_text(chunk)
                 widget.pack(fill=tk.X, padx=10, pady=5, anchor='w')
                 
 
