@@ -12,12 +12,16 @@ class SettingsManager:
         self.model_settings_file_name = 'model_settings.json'
         self.init_model_settings()
 
+        # Initialize download settings
+        self.download_settings_file_name = 'download_settings.json'
+        self.init_download_settings()
+
         # Initialize ui settings
         self.ui_settings_file_name = 'ui_settings.json'
         self.init_ui_settings()
 
         # Initialize system text settings
-        self.agent_settings_file_name = 'system_text_settings.json'
+        self.agent_settings_file_name = 'agent_settings.json'
         self.init_agent_settings()
 
     def _ensure_folder_exists(self):
@@ -67,6 +71,40 @@ class SettingsManager:
     def set_model_settings(self, new_settings):
         self.write_settings(self.model_settings_file_name, new_settings)
 
+    # download settings methods
+    def init_download_settings(self):
+        download_settings_file = os.path.join(self.settings_folder, self.download_settings_file_name)
+
+        self.default_download_settings = {
+            "model": "llama3.1:8b",
+            "available models": [
+                ("llama3.1:8b", 4.7), 
+                ("llama3.1:70b", 40), 
+                ("llama3.1:405b", 231), 
+                ("gemma2:2b", 1.6), 
+                ("gemma2:9b", 5.4), 
+                ("gemma2:27b", 16), 
+                ("mistral-nemo:12b", 7.1), 
+                ("mistral-large:123b", 69), 
+                ("mistral:7b", 4.1), 
+                ("phi3:3.8b", 2.2), 
+                ("phi3:14b", 7.9), 
+                ("codegemma:2b", 1.6), 
+                ("codegemma:7b", 5.0), 
+                ("llava:7b", 4.7), 
+                ("llava:13b", 8.0), 
+                ("llava:34b", 20)
+            ]
+        }
+
+        self._ensure_file_exists(download_settings_file, self.default_download_settings)
+
+    def get_download_settings(self):
+        return self.read_settings(self.download_settings_file_name)
+    
+    def set_download_settings(self, new_settings):
+        self.write_settings(self.download_settings_file_name, new_settings)
+
     # ui settings methods
     def init_ui_settings(self):
         ui_settings_file = os.path.join(self.settings_folder, self.ui_settings_file_name)
@@ -110,19 +148,19 @@ class SettingsManager:
                     "name": "Larry",
                     "role": "a helpful AI assistant",
                     "personality": "fun, cheery",
-                    "behaviors": {
-                        "0": "end every response with a comment saying you are always open to help and to ask you whatever",
-                        "1": "try to crack a couple jokes in every response"
-                    }
+                    "behaviors": [
+                        "end every response with a comment saying you are always open to help and to ask you whatever",
+                        "try to crack a couple jokes in every response"
+                    ],
                 },
                 "coding larry": {
                     "name": "Larry",
                     "role": "an AI assistant to help with coding and debugging",
                     "personality": "informative, brief",
-                    "behaviors": {
-                        "0": "add comments periodically describing attributes and methods",
-                        "1": "whenever editing code, add comments wherever you make changes/additions/removals",
-                    },
+                    "behaviors": [
+                        "add comments periodically describing attributes and methods",
+                        "whenever editing code, add comments wherever you make changes/additions/removals"
+                    ],
                 }
             }
         }

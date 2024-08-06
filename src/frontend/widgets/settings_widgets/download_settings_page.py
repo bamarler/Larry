@@ -63,6 +63,38 @@ class DownloadSettingsPage(SettingsPage):
         self.status_label = tk.Label(self.page, text="Status: ", font=(FONT, FONTSIZE), bg=BACKGROUND_COLOR, fg=TEXT_COLOR)
         self.status_label.pack(fill=tk.X, padx=5, pady=10)
 
+        # Add model section
+        add_model_label = tk.Label(self.page, text="Add Model", font=(FONT, FONTSIZE + 2, 'bold'), bg=BACKGROUND_COLOR, fg=TEXT_COLOR)
+        add_model_label.pack(pady=10)
+
+        add_model_description = tk.Label(self.page, text="Add models using their name from ollama.com and size in GB. Visit ", font=(FONT, FONTSIZE), bg=BACKGROUND_COLOR, fg=TEXT_COLOR)
+        add_model_description.pack()
+
+        link = tk.Label(self.page, text="https://ollama.com/library", font=(FONT, FONTSIZE), bg=BACKGROUND_COLOR, fg=TEXT_COLOR, cursor="hand2")
+        link.pack()
+        link.bind("<Button-1>", lambda e: self.open_url("https://ollama.com/library"))
+
+        add_model_frame = tk.Frame(self.page, bg=BACKGROUND_COLOR)
+        add_model_frame.pack(pady=10)
+
+        model_name_label = tk.Label(add_model_frame, text="Model Name:", font=(FONT, FONTSIZE), bg=BACKGROUND_COLOR, fg=TEXT_COLOR)
+        model_name_label.grid(row=0, column=0, padx=5, pady=5, sticky='w')
+
+        self.model_name_entry = tk.Entry(add_model_frame, font=(FONT, FONTSIZE), bg=BACKGROUND_COLOR, fg=TEXT_COLOR)
+        self.model_name_entry.grid(row=0, column=1, padx=5, pady=5, sticky='ew')
+
+        size_label = tk.Label(add_model_frame, text="Size:", font=(FONT, FONTSIZE), bg=BACKGROUND_COLOR, fg=TEXT_COLOR)
+        size_label.grid(row=1, column=0, padx=5, pady=5, sticky='w')
+
+        self.size_entry = tk.Entry(add_model_frame, font=(FONT, FONTSIZE), bg=BACKGROUND_COLOR, fg=TEXT_COLOR)
+        self.size_entry.grid(row=1, column=1, padx=5, pady=5, sticky='ew')
+
+        add_model_button = tk.Button(add_model_frame, text="Add Model", font=(FONT, FONTSIZE), bg=ACCENT_COLOR, fg=TEXT_COLOR, bd=0, command=self.add_model)
+        add_model_button.grid(row=2, columnspan=2, pady=10)
+
+        # Configure grid weight for resizing
+        add_model_frame.grid_columnconfigure(1, weight=1)
+
         # Load models
         self.load_models()
 
@@ -119,3 +151,21 @@ class DownloadSettingsPage(SettingsPage):
         self.status_label.config(text=f"{ollama_remove['status']}")
         self.status_label.config(text=f"{model_name} successfully removed")
         self.load_models()  # Update lists
+    
+    def add_model(self):
+        model_name = self.model_name_entry.get().strip()
+        size = self.size_entry.get().strip()
+        
+        if model_name and size:
+            try:
+                size = float(size)
+                model = (model_name, size)
+                self.model_manager.add_model(model)
+                self.status_label.config(text=f"{model_name} added successfully")
+                self.load_models()
+            except ValueError:
+                self.status_label.config(text="Size must be a number")
+
+    def open_url(self, url):
+        import webbrowser
+        webbrowser.open_new(url)

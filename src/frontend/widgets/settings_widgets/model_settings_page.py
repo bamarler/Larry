@@ -30,27 +30,30 @@ class ModelSettingsPage(SettingsPage):
     def create_scrollable_canvas(self):
         # Create a canvas with a scrollbar
         self.canvas = tk.Canvas(self.page, bg=BACKGROUND_COLOR, highlightthickness=0)
-        scrollbar = tk.Scrollbar(self.page, orient="vertical", command=self.canvas.yview)
-        scrollable_frame = tk.Frame(self.canvas, bg=BACKGROUND_COLOR)
+        self.scrollbar = tk.Scrollbar(self.page, orient="vertical", command=self.canvas.yview)
+        self.scrollable_frame = tk.Frame(self.canvas, bg=BACKGROUND_COLOR)
 
-        scrollable_frame.bind(
-            "<Configure>",
-            lambda e: self.canvas.configure(
-                scrollregion=self.canvas.bbox("all")
-            )
-        )
+        self.scrollable_frame.bind("<Configure>", self.on_frame_configure)
 
-        self.canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
-        self.canvas.configure(yscrollcommand=scrollbar.set)
+        self.canvas_window = self.canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
+        self.canvas.configure(yscrollcommand=self.scrollbar.set)
+        self.canvas.bind("<Configure>", self.on_canvas_configure)
 
         self.canvas.pack(side="left", fill="both", expand=True)
-        scrollbar.pack(side="right", fill="y")
+        self.scrollbar.pack(side="right", fill="y")
 
         # Bind mouse wheel to scroll
         self.canvas.bind("<Enter>", self._bind_to_mousewheel)
         self.canvas.bind("<Leave>", self._unbind_from_mousewheel)
 
-        self.create_settings_page(scrollable_frame)
+        self.create_settings_page(self.scrollable_frame)
+    
+    def on_frame_configure(self, event):
+        self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+        self.canvas.itemconfig(self.canvas_window, width=event.width)
+
+    def on_canvas_configure(self, event):
+        self.canvas.itemconfig(self.canvas_window, width=event.width)
 
     def _bind_to_mousewheel(self, event):
         self.canvas.bind_all("<MouseWheel>", self._on_mouse_wheel)

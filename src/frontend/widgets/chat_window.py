@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 import threading
-import time
+import queue
 import os
 import sys
 
@@ -10,6 +10,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.realp
 from src.frontend.ui_constants import ui_constants
 from src.backend.chat_manager import ChatManager
 from src.backend.model_manager import ModelManager
+from src.backend.system_manager import SystemManager
 from src.frontend.widgets.chat_widgets.entry_field import EntryField
 from src.frontend.widgets.chat_widgets.user_prompt import UserPrompt
 from src.frontend.widgets.chat_widgets.assistant_response import AssistantResponse
@@ -25,9 +26,10 @@ class ChatWindow(tk.Frame):
     def __init__(self, parent):
         super().__init__(parent, bg=BACKGROUND_COLOR)
 
-        # Initialize ChatManager
+        # Initialize Managers
         self.chat_manager = ChatManager()
         self.model_manager = ModelManager()
+        self.system_manager = SystemManager()
 
         # Create a frame for the top menu
         self.top_frame = tk.Frame(self, bg=BACKGROUND_COLOR)
@@ -37,6 +39,7 @@ class ChatWindow(tk.Frame):
         self.top_frame.grid_columnconfigure(0, weight=1, uniform="column")
         self.top_frame.grid_columnconfigure(1, weight=1, uniform="column")
         self.top_frame.grid_columnconfigure(2, weight=1, uniform="column")
+        self.top_frame.grid_columnconfigure(3, weight=1, uniform="column")
 
         # Define the style for the Combobox
         style = ttk.Style()
@@ -63,15 +66,24 @@ class ChatWindow(tk.Frame):
         self.model_dropdown.grid(row=0, column=1, padx=10)
         self.model_dropdown.bind("<<ComboboxSelected>>", self.change_model)
 
+        # Add a dropdown menu for agent selection
+        self.selected_agent = tk.StringVar()
+        self.agent_dropdown = ttk.Combobox(self.top_frame, textvariable=self.selected_agent, state='readonly', font=(FONT, FONTSIZE))
+        self.agent_dropdown.grid(row=0, column=2, padx=10)
+        self.agent_dropdown.bind("<<ComboboxSelected>>", self.change_agent)
+
         # Add a new chat button
         self.new_chat_button = tk.Button(self.top_frame, text="+", command=self.create_new_chat, font=(FONT, FONTSIZE), bg=BACKGROUND_COLOR, fg=TEXT_COLOR, bd=0)
-        self.new_chat_button.grid(row=0, column=2, padx=5, pady=5, sticky='e')
+        self.new_chat_button.grid(row=0, column=3, padx=5, pady=5, sticky='e')
 
         # Initialize last_message_count
         self.last_message_count = 0
 
         # Initialize Model List
-        self.selected_model.set(self.model_manager.current_model)
+        self.selected_model.set(self.model_manager.get_current_model())
+
+        # Initialize Agent List
+        self.selected_agent.set(self.system_manager.get_current_agent())
 
         # Create and pack the entry field at the bottom
         self.entry_field = EntryField(self, self.send_message)
@@ -125,6 +137,7 @@ class ChatWindow(tk.Frame):
     def refresh(self):
         self.refresh_chat_list()
         self.refresh_model_list()
+        self.refresh_agent_list()
 
     def refresh_chat_list(self):
         chats = self.chat_manager.list_chats()
@@ -157,13 +170,23 @@ class ChatWindow(tk.Frame):
     
     def refresh_model_list(self):
         model_names = self.model_manager.list_models()
-        self.model_dropdown['values'] = [model for model in model_names if model != self.model_manager.current_model]
+        self.model_dropdown['values'] = [model for model in model_names if model != self.model_manager.get_current_model()]
 
     def change_model(self, event=None):
         selected_model = self.selected_model.get()
         if selected_model:
             self.model_manager.change_model(selected_model)
             self.refresh_model_list()
+    
+    def refresh_agent_list(self):
+        agent_names = self.system_manager.list_agents()
+        self.agent_dropdown['values'] = [agent for agent in agent_names if agent != self.system_manager.get_current_agent()]
+
+    def change_agent(self, event=None):
+        selected_agent = self.selected_agent.get()
+        if selected_agent:
+            self.system_manager.change_agent(selected_agent)
+            self.refresh_agent_list()
     
     def scroll_to_bottom(self):
         self.chat_canvas.update_idletasks()  # Ensure all pending updates are applied
@@ -194,7 +217,6 @@ class ChatWindow(tk.Frame):
                     widget.insert_text(chunk)
                 widget.pack(fill=tk.X, padx=10, pady=5, anchor='w')
                 
-
         self.scroll_to_bottom()
 
     def send_message(self, prompt):
@@ -207,7 +229,18 @@ class ChatWindow(tk.Frame):
         response_widget.pack(fill=tk.X, padx=10, pady=5, anchor='w')
         self.scroll_to_bottom()
 
-        response = self.model_manager.send_message(prompt)
+        q = queue.Queue()
+        response_thread = threading.Thread(target=lambda: self.model_manager.send_message(prompt, q))
+        response_thread.start()
+
+        def response_generator(q):
+            while True:
+                item = q.get()
+                if item is None:
+                    break
+                yield item
+        
+        response = response_generator(q)
 
         for chunk in response:
             response_widget.insert_text(chunk)

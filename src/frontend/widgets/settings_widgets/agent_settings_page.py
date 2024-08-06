@@ -34,18 +34,14 @@ class AgentSettingsPage(SettingsPage):
         self.scrollbar = tk.Scrollbar(self.page, orient="vertical", command=self.canvas.yview)
         self.scrollable_frame = tk.Frame(self.canvas, bg=BACKGROUND_COLOR)
 
-        self.scrollable_frame.bind(
-            "<Configure>",
-            lambda e: self.canvas.configure(
-                scrollregion=self.canvas.bbox("all")
-            )
-        )
-
-        self.canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
+        self.scrollable_frame.bind("<Configure>", self.on_frame_configure)
+        
+        self.canvas_window = self.canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
         self.canvas.configure(yscrollcommand=self.scrollbar.set)
+        self.canvas.bind("<Configure>", self.on_canvas_configure)
 
         self.canvas.pack(side="left", fill="both", expand=True)
-        self.scrollbar.pack(side="right", fill="y")
+        self.scrollbar.pack(side="right", fill="y", padx=5)
 
         # Bind mouse wheel to scroll
         self.canvas.bind("<Enter>", self._bind_to_mousewheel)
@@ -55,17 +51,10 @@ class AgentSettingsPage(SettingsPage):
     
     def on_frame_configure(self, event):
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
-        # Enable or disable scrollbar based on content height
-        content_height = self.scrollable_frame.winfo_height()
-        canvas_height = self.canvas.winfo_height()
-        if content_height <= canvas_height:
-            self.scrollbar.pack_forget()  # Hide scrollbar if content fits
-            self.canvas.unbind("<Enter>")
-            self.canvas.unbind("<Leave>")
-        else:
-            self.scrollbar.pack(side="right", fill="y")
-            self.canvas.bind("<Enter>", self._bind_to_mousewheel)
-            self.canvas.bind("<Leave>", self._unbind_from_mousewheel)
+        self.canvas.itemconfig(self.canvas_window, width=event.width)
+
+    def on_canvas_configure(self, event):
+        self.canvas.itemconfig(self.canvas_window, width=event.width)
 
     def create_settings_page(self, frame):
         header = tk.Label(frame, text="Agent Settings", font=(FONT, FONTSIZE + 4, 'bold'), bg=BACKGROUND_COLOR, fg=TEXT_COLOR)
@@ -115,6 +104,7 @@ class AgentSettingsPage(SettingsPage):
             ("Personality (adjectives):", agent.get("personality", ""))
         ]
 
+        self.agent_entries = []
         for i, (label_text, value) in enumerate(fields):
             label = tk.Label(details_frame, text=label_text, font=(FONT, FONTSIZE, 'bold'), bg=BACKGROUND_COLOR, fg=TEXT_COLOR)
             label.grid(row=i, column=0, padx=5, pady=5, sticky='w')
@@ -122,16 +112,18 @@ class AgentSettingsPage(SettingsPage):
             entry = tk.Entry(details_frame, font=(FONT, FONTSIZE), bg=BACKGROUND_COLOR, fg=TEXT_COLOR)
             entry.insert(0, value)
             entry.grid(row=i, column=1, padx=5, pady=5, sticky='ew')
+            
+            self.agent_entries.append(entry)
 
         details_frame.columnconfigure(1, weight=1)
 
         behaviors_label = tk.Label(self.agent_details_frame, text="Behaviors", font=(FONT, FONTSIZE + 2, 'bold'), bg=BACKGROUND_COLOR, fg=TEXT_COLOR)
         behaviors_label.pack(pady=10)
 
-        behaviors = agent.get("behaviors", {})
+        behaviors = agent.get("behaviors", [])
 
         self.behavior_entries = {}
-        for i, (key, behavior) in enumerate(behaviors.items()):
+        for i, behavior in enumerate(behaviors):
             self.create_behavior_entry(i, behavior)
 
         # Create New Behavior button
@@ -167,7 +159,7 @@ class AgentSettingsPage(SettingsPage):
         if agent_name in self.agent_settings["agents"]:
             del self.agent_settings["agents"][agent_name]
             self.settings_manager.set_agent_settings(self.agent_settings)
-            self.update_agent_dropdown()
+            self.update_agent_dropdown_values()
 
     def create_agent(self):
         new_agent_name = "New Agent"
@@ -178,7 +170,7 @@ class AgentSettingsPage(SettingsPage):
             "behaviors": {}
         }
         self.settings_manager.set_agent_settings(self.agent_settings)
-        self.update_agent_dropdown()
+        self.update_agent_dropdown_values()
         self.agent_var.set(new_agent_name)
         self.update_agent_details()
 
@@ -188,10 +180,12 @@ class AgentSettingsPage(SettingsPage):
             agent = self.agent_settings["agents"][agent_name]
 
             # Fetch entries from agent_details_frame
-            entries = [entry for entry in self.agent_details_frame.winfo_children() if isinstance(entry, tk.Entry)]
+            entries = self.agent_entries
             
+            print(entries)
             for i, entry in enumerate(entries):
                 text = entry.get()
+                print(f"{text}\n")
                 if i == 0:
                     new_agent_name = text
                     self.agent_settings["agents"][new_agent_name] = self.agent_settings["agents"].pop(agent_name)
@@ -204,7 +198,7 @@ class AgentSettingsPage(SettingsPage):
                 elif i == 3:
                     agent["personality"] = text
 
-            agent["behaviors"] = {str(i): entry.get("1.0", "end-1c") for i, entry in self.behavior_entries.items()}
+            agent["behaviors"] = [entry.get("1.0", "end-1c") for entry in self.behavior_entries.values()]
 
             self.settings_manager.set_agent_settings(self.agent_settings)
             self.update_agent_dropdown_values()
