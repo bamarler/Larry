@@ -154,7 +154,7 @@ class ChatWindow(tk.Frame):
             self.scroll_to_top()
             self.refresh()
             self.load_chat()
-            self.scroll_to_bottom()
+            self.scroll_to_top()
 
     def create_new_chat(self):
         new_chat_name = self.chat_manager.create_new_chat()
@@ -190,11 +190,16 @@ class ChatWindow(tk.Frame):
     
     def scroll_to_bottom(self):
         self.chat_canvas.update_idletasks()  # Ensure all pending updates are applied
-        self.chat_canvas.yview_moveto(1.0)  # Scroll to the bottom
+        while self.chat_canvas.yview()[0] > 0:  # Check if the scrollbar is not at the top
+            self.chat_canvas.yview_scroll(1, 'units')  # Scroll down by one unit
+            self.chat_canvas.update_idletasks()  # Apply the scroll action
+
 
     def scroll_to_top(self):
         self.chat_canvas.update_idletasks()  # Ensure all pending updates are applied
-        self.chat_canvas.yview_moveto(0.0)  # Scroll to the top
+        while self.chat_canvas.yview()[0] > 0:  # Check if the scrollbar is not at the top
+            self.chat_canvas.yview_scroll(-1, 'units')  # Scroll up by one unit
+            self.chat_canvas.update_idletasks()  # Apply the scroll action
 
     def load_chat(self):
         # Clear the canvas of any widgets
