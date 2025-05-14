@@ -6,7 +6,12 @@ Larry is an AI assistant that runs opensource Large Language Models locally on c
 ![image](https://github.com/user-attachments/assets/eff21959-4226-481c-89ee-1ac658a060f7)
 
 ## How to Use
-Clone the repository, then run the following script: ```src/backend/main.py```
+* Before attempting to use, make sure you have a working GPU and NVIDIA CUDA installed. Otherwise the models will run strictly using your CPU and performance will falter.
+* Clone the repository
+* Create a new python environment
+* Run `pip install -r requirements.txt`
+* Run the following script: `src/backend/main.py`
+* Additionally, you can run `pyinstaller --onefile build-larry.spec` to generate an executable.
 
 ## Features
 * You can install any available model from [Ollama](https://ollama.com/search) depending on your available memory and computer specs. You can also remove any old models that you don't use anymore to make space.
